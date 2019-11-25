@@ -23,10 +23,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 
 /**
  * This is the implementation class to store images in to local file system.
@@ -38,9 +40,9 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     private static final String IMAGE_STORE = "repository/images";
 
     @Override
-    public void addFile(InputStream inputStream, String type) {
+    public void addFile(InputStream inputStream, String type, String uuid, long timeStamp) {
         try {
-            uploadImageUsingChannels(inputStream, type);
+            uploadImageUsingChannels(inputStream, type, uuid, timeStamp);
         } catch (IOException e) {
             LOGGER.error("Error while uploading file. ", e);
             // TODO: 11/22/19 throw custom excpetion related to this component. 
@@ -57,17 +59,23 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
     }
 
-    private void uploadImageUsingChannels(InputStream fileInputStream, String type) throws IOException {
+    private void uploadImageUsingChannels(InputStream fileInputStream, String type, String uuid, long timeStamp) throws IOException {
 
-        String fileName = UUID.randomUUID().toString();
+        String fileName = uuid;
         Path imagesPath;
         Path targetLocation;
         imagesPath = createSpecificDirectory(type);
 
         targetLocation = imagesPath.resolve(fileName);
+        Files.setAttribute(targetLocation,"creationTime",FileTime.fromMillis(timeStamp));
         FileOutputStream fileOutputStream = new FileOutputStream(targetLocation.toFile());
         FileChannel fileChannel = fileOutputStream.getChannel();
-        fileChannel.transferFrom(Channels.newChannel(fileInputStream), 0, Long.MAX_VALUE);
+        ReadableByteChannel readableByteChannel = Channels.newChannel(fileInputStream);
+        fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+        fileChannel.close();
+        readableByteChannel.close();
+
+
 
     }
 

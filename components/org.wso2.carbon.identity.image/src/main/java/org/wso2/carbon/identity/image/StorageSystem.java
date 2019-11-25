@@ -22,7 +22,7 @@ import java.io.InputStream;
  */
 public interface StorageSystem {
 
-    void addFile(InputStream inputStream, String type);
+    void addFile(InputStream inputStream, String type, String uuid, long timeStamp);
 
     void getFIle();
 

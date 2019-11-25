@@ -25,7 +25,7 @@ import java.io.InputStream;
 public class DatabaseBasedStorageSystemImpl implements StorageSystem {
 
     @Override
-    public void addFile(InputStream inputStream, String type) {
+    public void addFile(InputStream inputStream, String type, String uuid, long timeStamp) {
 
     }
 
