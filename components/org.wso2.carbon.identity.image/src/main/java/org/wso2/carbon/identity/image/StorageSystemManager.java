@@ -17,42 +17,49 @@
  */
 package org.wso2.carbon.identity.image;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.image.exception.StorageSystemException;
 import org.wso2.carbon.identity.image.internal.ImageServiceDataHolder;
+import org.wso2.carbon.identity.image.util.StorageSystemUtil;
 
 import java.io.InputStream;
-import java.util.Date;
-import java.util.UUID;
 
 /**
  * Controller class which invokes specific type of storage type implementation classes using factory pattern.
  */
 public class StorageSystemManager {
 
+    private static final Logger LOGGER = Logger.getLogger(StorageSystemManager.class);
+
     /**
      * Method which store an uploaded file to underlying storage system.
      *
      * @param inputStream the inputstream of the uploaded file
-     * @param type        wether, file is of type, idp/sp/user
-     * @return unique id related to the uploaded resource. unique id is calculated by concatening uuid,hash of uuid
-     * and a timestamp value.
+     * @param type        whether, file is of type, idp/sp/user
+     * @return unique id related to the uploaded resource. unique id is calculated by concatenating uuid,a unique
+     * hash value and a timestamp value.
      */
-    public String addFile(InputStream inputStream, String type) {
+    public String addFile(InputStream inputStream, String type) throws StorageSystemException {
 
         String storageType = readStorageTypeFromConfig();
-        String uuid = UUID.randomUUID().toString();
-        String uuidHash = calculateUUIDHash(uuid);
-        long timeStamp = calculateTimeStamp();
-        getStorageSystemFactory(storageType).getInstance().addFile(inputStream, type, uuid, timeStamp);
-
-        return uuid + uuidHash + timeStamp;
-
+        String uuid = new StorageSystemUtil().calculateUUID();
+        return getStorageSystemFactory(storageType).getInstance().addFile(inputStream, type, uuid);
     }
 
-    public void getFile() {
+    /**
+     * Method which retrieves a stored file.
+     *
+     * @param id   unique id related to the requesting resource. (This id consists of uuid, a unique hash value and a
+     *             timestamp.)
+     * @param type Type of image (could be i,a, or u) i stands for idp,a stands for app, u stands for user
+     * @return inputstream of the file.
+     */
+    public InputStream getFile(String id, String type) throws StorageSystemException {
 
+        String storageType = readStorageTypeFromConfig();
+        return getStorageSystemFactory(storageType).getInstance().getFile(id, type);
     }
 
     public void deleteFile() {
@@ -74,14 +81,4 @@ public class StorageSystemManager {
 
     }
 
-    private String calculateUUIDHash(String uuid) {
-
-        return DigestUtils.sha256Hex(uuid);
-    }
-
-    private long calculateTimeStamp() {
-
-        return new Date().getTime();
-
-    }
 }

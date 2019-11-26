@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wso2.carbon.identity.image;
+package org.wso2.carbon.identity.image.util;
 
-import org.wso2.carbon.identity.image.exception.StorageSystemException;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.log4j.Logger;
 
-import java.io.InputStream;
+import java.util.UUID;
 
-/**
- * Interface describing the functionality provided by an underlying storage system.
- */
-public interface StorageSystem {
+public class StorageSystemUtil {
 
-    String addFile(InputStream inputStream, String type, String uuid) throws StorageSystemException;
+    private static final Logger LOGGER = Logger.getLogger(StorageSystemUtil.class);
 
-    InputStream getFile(String id, String type) throws StorageSystemException;
+    public String calculateUUIDHash(String uuid, String timeStamp) {
 
-    void deleteFile();
+        return DigestUtils.sha256Hex(uuid + timeStamp);
+    }
 
+    public String calculateUUID(){
+        return UUID.randomUUID().toString();
+    }
 }

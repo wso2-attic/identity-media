@@ -17,6 +17,8 @@ package org.wso2.carbon.identity.image.file;
 
 import org.apache.log4j.Logger;
 import org.wso2.carbon.identity.image.StorageSystem;
+import org.wso2.carbon.identity.image.exception.StorageSystemException;
+import org.wso2.carbon.identity.image.util.StorageSystemUtil;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,8 +29,11 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+
+import static org.wso2.carbon.identity.image.util.StorageSystemConstants.ID_SEPERATOR;
+import static org.wso2.carbon.identity.image.util.StorageSystemConstants.IMAGE_STORE;
+import static org.wso2.carbon.identity.image.util.StorageSystemConstants.SYSTEM_PROPERTY_CARBON_HOME;
 
 /**
  * This is the implementation class to store images in to local file system.
@@ -36,22 +41,31 @@ import java.nio.file.attribute.FileTime;
 public class FileBasedStorageSystemImpl implements StorageSystem {
 
     private static final Logger LOGGER = Logger.getLogger(FileBasedStorageSystemFactory.class);
-    private static final String SYSTEM_PROPERTY_CARBON_HOME = "carbon.home";
-    private static final String IMAGE_STORE = "repository/images";
 
     @Override
-    public void addFile(InputStream inputStream, String type, String uuid, long timeStamp) {
+    public String addFile(InputStream inputStream, String type, String uuid) throws StorageSystemException {
+
         try {
-            uploadImageUsingChannels(inputStream, type, uuid, timeStamp);
+            return uploadImageUsingChannels(inputStream, type, uuid);
         } catch (IOException e) {
-            LOGGER.error("Error while uploading file. ", e);
-            // TODO: 11/22/19 throw custom excpetion related to this component. 
+            String errorMsg = String.format("Error while uploading image to file system for %s type.", type);
+            throw new StorageSystemException(errorMsg, e);
         }
+
     }
 
     @Override
-    public void getFIle() {
+    public InputStream getFile(String id, String type) throws StorageSystemException {
 
+        String[] urlElements = retrieveUrlElements(id);
+        InputStream inputStream;
+        try {
+            inputStream = getImageFile(urlElements, type);
+        } catch (IOException e) {
+            String errorMsg = String.format("Error while retrieving the stored file of type %s.", type);
+            throw new StorageSystemException(errorMsg, e);
+        }
+        return inputStream;
     }
 
     @Override
@@ -59,23 +73,21 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
     }
 
-    private void uploadImageUsingChannels(InputStream fileInputStream, String type, String uuid, long timeStamp) throws IOException {
+    private String uploadImageUsingChannels(InputStream fileInputStream, String type, String uuid) throws IOException {
 
-        String fileName = uuid;
-        Path imagesPath;
-        Path targetLocation;
-        imagesPath = createSpecificDirectory(type);
+        Path imagesPath = createSpecificDirectory(type);
+        Path targetLocation = imagesPath.resolve(uuid);
+        try (FileOutputStream fileOutputStream = new FileOutputStream(targetLocation.toFile());
+                FileChannel fileChannel = fileOutputStream.getChannel();
+                ReadableByteChannel readableByteChannel = Channels.newChannel(fileInputStream)) {
+            fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+        }
 
-        targetLocation = imagesPath.resolve(fileName);
-        Files.setAttribute(targetLocation,"creationTime",FileTime.fromMillis(timeStamp));
-        FileOutputStream fileOutputStream = new FileOutputStream(targetLocation.toFile());
-        FileChannel fileChannel = fileOutputStream.getChannel();
-        ReadableByteChannel readableByteChannel = Channels.newChannel(fileInputStream);
-        fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
-        fileChannel.close();
-        readableByteChannel.close();
+        FileTime createdTime = (FileTime) Files.getAttribute(targetLocation, "creationTime");
+        String timeStampAsString = Long.toString(createdTime.toMillis());
+        String uuidHash = new StorageSystemUtil().calculateUUIDHash(uuid, timeStampAsString);
 
-
+        return uuid + ID_SEPERATOR + uuidHash + ID_SEPERATOR + timeStampAsString;
 
     }
 
@@ -83,12 +95,13 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
         Path fileStorageLocation = Paths.get(System.getProperty(SYSTEM_PROPERTY_CARBON_HOME))
                 .resolve(Paths.get(IMAGE_STORE));
+
         switch (type) {
         case "idp":
             return Files.createDirectories(fileStorageLocation.resolve("idp"));
 
-        case "sp":
-            return Files.createDirectories(fileStorageLocation.resolve("sp"));
+        case "app":
+            return Files.createDirectories(fileStorageLocation.resolve("app"));
 
         case "user":
             return Files.createDirectories(fileStorageLocation.resolve("user"));
@@ -97,6 +110,68 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             return Files.createDirectories(fileStorageLocation.resolve("default"));
         }
 
+    }
+
+    /**
+     * The GET url will be in the format of https://localhost:9443/t/carbon
+     * .super/api/server/v1/images/{type}/uuid_unique-hash_timestamp.
+     * This method will return the uuid,unique-hash and timestamp in an array after splitting using the seperator
+     * (underscore)
+     *
+     * @param id url fragment defining the unique id of the resource
+     * @return String array containing uuid,unique-hash and timestamp
+     */
+    private String[] retrieveUrlElements(String id) {
+
+        if (id == null) {
+            return null;
+        }
+        return id.split(ID_SEPERATOR);
+
+    }
+
+    private boolean validate(String[] urlElements, long createdTime) {
+
+        if (urlElements[2].equals(Long.toString(createdTime)) && urlElements[1]
+                .equals(new StorageSystemUtil().calculateUUIDHash(urlElements[0], urlElements[2]))) {
+            return true;
+        }
+        return false;
+
+    }
+
+    private InputStream getImageFile(String[] urlElements, String type) throws IOException {
+
+        String storageType;
+        switch (type) {
+        case "i":
+            storageType = "idp";
+            break;
+
+        case "a":
+            storageType = "app";
+            break;
+
+        case "u":
+            storageType = "user";
+            break;
+
+        default:
+            storageType = "default";
+            break;
+        }
+
+        Path fileStorageLocation = createSpecificDirectory(storageType);
+        String fileName = urlElements[0];
+        Path filePath = fileStorageLocation.resolve(fileName).normalize();
+        FileTime createdTime = (FileTime) Files.getAttribute(filePath, "creationTime");
+
+        InputStream inputStream = null;
+        if (validate(urlElements, createdTime.toMillis())) {
+            inputStream = Files.newInputStream(filePath);
+        }
+
+        return inputStream;
     }
 
 }
