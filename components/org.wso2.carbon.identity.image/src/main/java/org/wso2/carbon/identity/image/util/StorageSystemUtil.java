@@ -20,6 +20,9 @@ import org.apache.log4j.Logger;
 
 import java.util.UUID;
 
+/**
+ * Util class to provide commonly used methods within the component.
+ */
 public class StorageSystemUtil {
 
     private static final Logger LOGGER = Logger.getLogger(StorageSystemUtil.class);
@@ -29,7 +32,7 @@ public class StorageSystemUtil {
         return DigestUtils.sha256Hex(uuid + timeStamp);
     }
 
-    public String calculateUUID(){
+    public String calculateUUID() {
         return UUID.randomUUID().toString();
     }
 }

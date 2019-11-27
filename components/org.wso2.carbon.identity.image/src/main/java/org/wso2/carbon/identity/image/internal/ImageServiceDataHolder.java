@@ -18,7 +18,7 @@
 package org.wso2.carbon.identity.image.internal;
 
 import org.osgi.framework.BundleContext;
-import org.wso2.carbon.identity.image.StorageSystemfactory;
+import org.wso2.carbon.identity.image.StorageSystemFactory;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.util.HashMap;
@@ -30,7 +30,7 @@ import java.util.Map;
 public class ImageServiceDataHolder {
 
     private BundleContext bundleContext;
-    private Map<String, StorageSystemfactory> storageSystemFactoryMap = new HashMap<>();
+    private Map<String, StorageSystemFactory> storageSystemFactoryMap = new HashMap<>();
     private RealmService realmService;
 
     private ImageServiceDataHolder() {
@@ -52,7 +52,7 @@ public class ImageServiceDataHolder {
         this.bundleContext = bundleContext;
     }
 
-    public Map<String, StorageSystemfactory> getStorageSystemFactories() {
+    public Map<String, StorageSystemFactory> getStorageSystemFactories() {
 
         return storageSystemFactoryMap;
     }

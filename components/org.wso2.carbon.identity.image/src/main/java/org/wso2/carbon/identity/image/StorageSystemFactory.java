@@ -20,7 +20,7 @@ package org.wso2.carbon.identity.image;
 /**
  * Interface for Storage system factories.
  */
-public abstract class StorageSystemfactory {
+public abstract class StorageSystemFactory {
 
     public abstract StorageSystem getInstance();
 

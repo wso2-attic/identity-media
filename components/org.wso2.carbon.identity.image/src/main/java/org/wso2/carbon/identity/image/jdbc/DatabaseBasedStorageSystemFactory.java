@@ -16,9 +16,12 @@
 package org.wso2.carbon.identity.image.jdbc;
 
 import org.wso2.carbon.identity.image.StorageSystem;
-import org.wso2.carbon.identity.image.StorageSystemfactory;
+import org.wso2.carbon.identity.image.StorageSystemFactory;
 
-public class DatabaseBasedStorageSystemFactory extends StorageSystemfactory {
+/**
+ * Factory class related to producing DatabaseBasedStorageSystemImpl objects.
+ */
+public class DatabaseBasedStorageSystemFactory extends StorageSystemFactory {
 
     public static final String JDBC = "org.wso2.carbon.identity.image.jdbc.DatabaseBasedStorageSystemImpl";
 

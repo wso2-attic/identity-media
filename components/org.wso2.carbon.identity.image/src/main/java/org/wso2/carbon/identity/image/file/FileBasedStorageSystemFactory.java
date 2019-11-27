@@ -16,9 +16,12 @@
 package org.wso2.carbon.identity.image.file;
 
 import org.wso2.carbon.identity.image.StorageSystem;
-import org.wso2.carbon.identity.image.StorageSystemfactory;
+import org.wso2.carbon.identity.image.StorageSystemFactory;
 
-public class FileBasedStorageSystemFactory extends StorageSystemfactory {
+/**
+ * Factory class related to producing FileBasedStorageSystemImpl objects.
+ */
+public class FileBasedStorageSystemFactory extends StorageSystemFactory {
 
     public static final String FILE = "org.wso2.carbon.identity.image.file.FileBasedStorageSystemImpl";
 

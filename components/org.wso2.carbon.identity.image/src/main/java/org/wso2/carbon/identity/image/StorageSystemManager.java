@@ -75,7 +75,7 @@ public class StorageSystemManager {
         return contentStoreType;
     }
 
-    private StorageSystemfactory getStorageSystemFactory(String storageType) {
+    private StorageSystemFactory getStorageSystemFactory(String storageType) {
 
         return ImageServiceDataHolder.getInstance().getStorageSystemFactories().get(storageType);
 

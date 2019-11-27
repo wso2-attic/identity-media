@@ -26,7 +26,7 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
-import org.wso2.carbon.identity.image.StorageSystemfactory;
+import org.wso2.carbon.identity.image.StorageSystemFactory;
 import org.wso2.carbon.identity.image.StorageSystemManager;
 import org.wso2.carbon.identity.image.file.FileBasedStorageSystemFactory;
 import org.wso2.carbon.identity.image.jdbc.DatabaseBasedStorageSystemFactory;
@@ -46,10 +46,10 @@ public class ImageServiceComponent {
 
         BundleContext bundleContext = componentContext.getBundleContext();
         ImageServiceDataHolder.getInstance().setBundleContext(bundleContext);
-        StorageSystemfactory fileBasedStorageSystemFactory = new FileBasedStorageSystemFactory();
-        bundleContext.registerService(StorageSystemfactory.class.getName(), fileBasedStorageSystemFactory, null);
-        StorageSystemfactory dbBasedStorageSystemFactory = new DatabaseBasedStorageSystemFactory();
-        bundleContext.registerService(StorageSystemfactory.class.getName(), dbBasedStorageSystemFactory, null);
+        StorageSystemFactory fileBasedStorageSystemFactory = new FileBasedStorageSystemFactory();
+        bundleContext.registerService(StorageSystemFactory.class.getName(), fileBasedStorageSystemFactory, null);
+        StorageSystemFactory dbBasedStorageSystemFactory = new DatabaseBasedStorageSystemFactory();
+        bundleContext.registerService(StorageSystemFactory.class.getName(), dbBasedStorageSystemFactory, null);
         bundleContext.registerService(StorageSystemManager.class, new StorageSystemManager(), null);
     }
 
@@ -62,11 +62,11 @@ public class ImageServiceComponent {
     }
 
     @Reference(name = "ImageServiceComponent",
-               service = org.wso2.carbon.identity.image.StorageSystemfactory.class,
+               service = StorageSystemFactory.class,
                cardinality = ReferenceCardinality.MULTIPLE,
                policy = ReferencePolicy.DYNAMIC,
                unbind = "unSetStorageSystemFactory")
-    protected void setStorageSystemFactory(StorageSystemfactory storageSystemFactory) {
+    protected void setStorageSystemFactory(StorageSystemFactory storageSystemFactory) {
 
         ImageServiceDataHolder.getInstance().getStorageSystemFactories()
                 .put(storageSystemFactory.getStorageType(), storageSystemFactory);
@@ -75,7 +75,7 @@ public class ImageServiceComponent {
         }
     }
 
-    protected void unSetStorageSystemFactory(StorageSystemfactory storageSystemfactory) {
+    protected void unSetStorageSystemFactory(StorageSystemFactory storageSystemfactory) {
 
         ImageServiceDataHolder.getInstance().getStorageSystemFactories().remove(storageSystemfactory.getStorageType());
         if (LOGGER.isDebugEnabled()) {

@@ -17,6 +17,9 @@
  */
 package org.wso2.carbon.identity.image.util;
 
+/**
+ * Class to hold constants.
+ */
 public class StorageSystemConstants {
 
     public static final String ID_SEPERATOR = "_";
