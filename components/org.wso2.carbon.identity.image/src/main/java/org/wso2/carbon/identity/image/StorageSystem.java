@@ -24,11 +24,12 @@ import java.io.InputStream;
  */
 public interface StorageSystem {
 
-    String addFile(InputStream inputStream, String type, String uuid) throws StorageSystemException;
+    String addFile(InputStream inputStream, String type, String uuid, String tenantDomain)
+            throws StorageSystemException;
 
-    InputStream getFile(String id, String type) throws StorageSystemException;
+    InputStream getFile(String id, String type, String tenantDomain) throws StorageSystemException;
 
-    void deleteFile(String id, String type) throws StorageSystemException;
+    void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException;
 
 }
 
