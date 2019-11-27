@@ -62,5 +62,8 @@ public class ImageServiceDataHolder {
         this.realmService = realmService;
     }
 
+    public RealmService getRealmService() {
+        return realmService;
+    }
 
 }

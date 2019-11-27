@@ -31,3 +31,4 @@ public interface StorageSystem {
     void deleteFile();
 
 }
+

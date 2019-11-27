@@ -124,7 +124,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     private String[] retrieveUrlElements(String id) {
 
         if (id == null) {
-            return null;
+            return new String[0];
         }
         return id.split(ID_SEPERATOR);
 
