@@ -62,7 +62,10 @@ public class StorageSystemManager {
         return getStorageSystemFactory(storageType).getInstance().getFile(id, type);
     }
 
-    public void deleteFile() {
+    public void deleteFile(String id, String type) throws StorageSystemException {
+
+        String storageType = readStorageTypeFromConfig();
+        getStorageSystemFactory(storageType).getInstance().deleteFile(id, type);
 
     }
 

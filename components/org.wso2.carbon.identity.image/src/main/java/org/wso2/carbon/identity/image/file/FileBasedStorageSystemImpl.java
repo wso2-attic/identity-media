@@ -69,7 +69,15 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public void deleteFile() {
+    public void deleteFile(String id, String type) throws StorageSystemException {
+
+        String[] urlElements = retrieveUrlElements(id);
+        try {
+            deleteImageFile(urlElements, type);
+        } catch (IOException e) {
+            String errorMsg = String.format("Error while deleting the stored file of type %s.", type);
+            throw new StorageSystemException(errorMsg, e);
+        }
 
     }
 
@@ -112,6 +120,26 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
     }
 
+    private Path generateImageCategoryPath(String type) {
+
+        Path fileStorageLocation = Paths.get(System.getProperty(SYSTEM_PROPERTY_CARBON_HOME))
+                .resolve(Paths.get(IMAGE_STORE));
+
+        switch (type) {
+        case "idp":
+            return fileStorageLocation.resolve("idp");
+
+        case "app":
+            return fileStorageLocation.resolve("app");
+
+        case "user":
+            return fileStorageLocation.resolve("user");
+
+        default:
+            return fileStorageLocation.resolve("default");
+        }
+    }
+
     /**
      * The GET url will be in the format of https://localhost:9443/t/carbon
      * .super/api/server/v1/images/{type}/uuid_unique-hash_timestamp.
@@ -142,36 +170,49 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
     private InputStream getImageFile(String[] urlElements, String type) throws IOException {
 
-        String storageType;
-        switch (type) {
-        case "i":
-            storageType = "idp";
-            break;
-
-        case "a":
-            storageType = "app";
-            break;
-
-        case "u":
-            storageType = "user";
-            break;
-
-        default:
-            storageType = "default";
-            break;
-        }
-
-        Path fileStorageLocation = createSpecificDirectory(storageType);
+        String imageCategoryType = getImageCategoryType(type);
+        Path fileStorageLocation = createSpecificDirectory(imageCategoryType);
         String fileName = urlElements[0];
         Path filePath = fileStorageLocation.resolve(fileName).normalize();
         FileTime createdTime = (FileTime) Files.getAttribute(filePath, "creationTime");
 
-        InputStream inputStream = null;
         if (validate(urlElements, createdTime.toMillis())) {
-            inputStream = Files.newInputStream(filePath);
+            try (InputStream inputStream = Files.newInputStream(filePath)) {
+                return inputStream;
+            }
+        }
+        return null;
+    }
+
+    private String getImageCategoryType(String type) {
+
+        switch (type) {
+        case "i":
+            return "idp";
+
+        case "a":
+            return "app";
+
+        case "u":
+            return "user";
+
+        default:
+            return "default";
+        }
+    }
+
+    private void deleteImageFile(String[] urlElements, String type) throws IOException {
+
+        String imageCategoryType = getImageCategoryType(type);
+        Path fileStorageLocation = generateImageCategoryPath(imageCategoryType);
+        String fileName = urlElements[0];
+        Path filePath = fileStorageLocation.resolve(fileName).normalize();
+        FileTime createdTime = (FileTime) Files.getAttribute(filePath, "creationTime");
+
+        if (validate(urlElements, createdTime.toMillis())) {
+            Files.deleteIfExists(filePath);
         }
 
-        return inputStream;
     }
 
 }

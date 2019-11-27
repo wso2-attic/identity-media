@@ -28,7 +28,7 @@ public interface StorageSystem {
 
     InputStream getFile(String id, String type) throws StorageSystemException;
 
-    void deleteFile();
+    void deleteFile(String id, String type) throws StorageSystemException;
 
 }
 

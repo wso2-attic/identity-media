@@ -36,7 +36,7 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public void deleteFile() {
+    public void deleteFile(String id, String type) {
 
     }
 }
