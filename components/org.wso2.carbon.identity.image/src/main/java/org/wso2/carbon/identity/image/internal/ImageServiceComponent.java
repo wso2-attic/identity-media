@@ -17,7 +17,8 @@
  */
 package org.wso2.carbon.identity.image.internal;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -39,7 +40,7 @@ import org.wso2.carbon.user.core.service.RealmService;
            immediate = true)
 public class ImageServiceComponent {
 
-    private static final Logger LOGGER = Logger.getLogger(ImageServiceComponent.class);
+    private static final Log LOGGER = LogFactory.getLog(ImageServiceComponent.class);
 
     @Activate
     protected void activate(ComponentContext componentContext) {

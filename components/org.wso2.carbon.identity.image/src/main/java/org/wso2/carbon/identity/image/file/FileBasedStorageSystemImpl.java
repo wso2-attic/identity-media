@@ -15,7 +15,8 @@
  */
 package org.wso2.carbon.identity.image.file;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.image.StorageSystem;
 import org.wso2.carbon.identity.image.exception.StorageSystemException;
@@ -41,7 +42,7 @@ import static org.wso2.carbon.identity.image.util.StorageSystemConstants.SYSTEM_
  */
 public class FileBasedStorageSystemImpl implements StorageSystem {
 
-    private static final Logger LOGGER = Logger.getLogger(FileBasedStorageSystemFactory.class);
+    private static final Log LOGGER = LogFactory.getLog(FileBasedStorageSystemFactory.class);
 
     @Override
     public String addFile(InputStream inputStream, String type, String uuid, String tenantDomain)
@@ -88,39 +89,52 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         Path imagesPath = createSpecificDirectory(type, tenantId);
-        Path targetLocation = imagesPath.resolve(uuid);
-        try (FileOutputStream fileOutputStream = new FileOutputStream(targetLocation.toFile());
-                FileChannel fileChannel = fileOutputStream.getChannel();
-                ReadableByteChannel readableByteChannel = Channels.newChannel(fileInputStream)) {
-            fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+        if (imagesPath != null) {
+            Path targetLocation = imagesPath.resolve(uuid);
+            if (targetLocation != null) {
+                try (FileOutputStream fileOutputStream = new FileOutputStream(targetLocation.toFile());
+                        FileChannel fileChannel = fileOutputStream.getChannel();
+                        ReadableByteChannel readableByteChannel = Channels.newChannel(fileInputStream)) {
+                    fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+                }
+
+                FileTime createdTime = (FileTime) Files.getAttribute(targetLocation, "creationTime");
+                String timeStampAsString = Long.toString(createdTime.toMillis());
+                String uuidHash = new StorageSystemUtil().calculateUUIDHash(uuid, timeStampAsString);
+
+                return uuid + ID_SEPERATOR + uuidHash + ID_SEPERATOR + timeStampAsString;
+            }
         }
 
-        FileTime createdTime = (FileTime) Files.getAttribute(targetLocation, "creationTime");
-        String timeStampAsString = Long.toString(createdTime.toMillis());
-        String uuidHash = new StorageSystemUtil().calculateUUIDHash(uuid, timeStampAsString);
-
-        return uuid + ID_SEPERATOR + uuidHash + ID_SEPERATOR + timeStampAsString;
-
+        return null;
     }
 
     private Path createSpecificDirectory(String type, int tenantId) throws IOException {
 
-        Path fileStorageLocation = Paths.get(System.getProperty(SYSTEM_PROPERTY_CARBON_HOME))
-                .resolve(Paths.get(IMAGE_STORE));
-
-        switch (type) {
-        case "idp":
-            return Files.createDirectories(fileStorageLocation.resolve("idp").resolve(String.valueOf(tenantId)));
-
-        case "app":
-            return Files.createDirectories(fileStorageLocation.resolve("app").resolve(String.valueOf(tenantId)));
-
-        case "user":
-            return Files.createDirectories(fileStorageLocation.resolve("user").resolve(String.valueOf(tenantId)));
-
-        default:
-            return Files.createDirectories(fileStorageLocation.resolve("default").resolve(String.valueOf(tenantId)));
+        Path carbonHomeLocation = Paths.get(System.getProperty(SYSTEM_PROPERTY_CARBON_HOME));
+        Path fileStorageLocation = null;
+        if (carbonHomeLocation != null) {
+            fileStorageLocation = carbonHomeLocation.resolve(Paths.get(IMAGE_STORE));
         }
+
+        if (fileStorageLocation != null) {
+            switch (type) {
+            case "idp":
+                return Files.createDirectories(fileStorageLocation.resolve("idp").resolve(String.valueOf(tenantId)));
+
+            case "app":
+                return Files.createDirectories(fileStorageLocation.resolve("app").resolve(String.valueOf(tenantId)));
+
+            case "user":
+                return Files.createDirectories(fileStorageLocation.resolve("user").resolve(String.valueOf(tenantId)));
+
+            default:
+                return Files
+                        .createDirectories(fileStorageLocation.resolve("default").resolve(String.valueOf(tenantId)));
+            }
+        }
+
+        return null;
 
     }
 

@@ -20,7 +20,7 @@ import org.wso2.carbon.identity.image.StorageSystem;
 import java.io.InputStream;
 
 /**
- * This class implements @ to store images in to database.
+ * This class implements StorageSystem to store images in to database.
  */
 public class DatabaseBasedStorageSystemImpl implements StorageSystem {
 
@@ -32,7 +32,7 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
 
     @Override
     public InputStream getFile(String id, String type, String tenantDomain) {
-       return null;
+        return null;
     }
 
     @Override

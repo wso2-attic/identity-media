@@ -18,7 +18,8 @@
 package org.wso2.carbon.identity.image;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.image.exception.StorageSystemException;
 import org.wso2.carbon.identity.image.internal.ImageServiceDataHolder;
@@ -31,7 +32,7 @@ import java.io.InputStream;
  */
 public class StorageSystemManager {
 
-    private static final Logger LOGGER = Logger.getLogger(StorageSystemManager.class);
+    private static final Log LOGGER = LogFactory.getLog(StorageSystemManager.class);
 
     /**
      * Method which store an uploaded file to underlying storage system.
@@ -46,7 +47,12 @@ public class StorageSystemManager {
 
         String storageType = readStorageTypeFromConfig();
         String uuid = new StorageSystemUtil().calculateUUID();
-        return getStorageSystemFactory(storageType).getInstance().addFile(inputStream, type, uuid, tenantDomain);
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(storageType);
+        if (storageSystemFactory != null) {
+            return storageSystemFactory.getInstance().addFile(inputStream, type, uuid, tenantDomain);
+        }
+        return "";
+
     }
 
     /**

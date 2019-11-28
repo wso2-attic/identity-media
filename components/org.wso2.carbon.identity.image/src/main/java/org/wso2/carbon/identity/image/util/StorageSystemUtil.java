@@ -16,8 +16,8 @@
 package org.wso2.carbon.identity.image.util;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.log4j.Logger;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import java.util.UUID;
 
 /**
@@ -25,7 +25,7 @@ import java.util.UUID;
  */
 public class StorageSystemUtil {
 
-    private static final Logger LOGGER = Logger.getLogger(StorageSystemUtil.class);
+    private static final Log LOGGER = LogFactory.getLog(StorageSystemUtil.class);
 
     public String calculateUUIDHash(String uuid, String timeStamp) {
 
