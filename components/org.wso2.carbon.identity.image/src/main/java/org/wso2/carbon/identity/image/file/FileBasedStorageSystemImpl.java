@@ -15,6 +15,7 @@
  */
 package org.wso2.carbon.identity.image.file;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -33,9 +34,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 
+import static org.wso2.carbon.identity.image.util.StorageSystemConstants.DEFAULT;
+import static org.wso2.carbon.identity.image.util.StorageSystemConstants.IDP;
 import static org.wso2.carbon.identity.image.util.StorageSystemConstants.ID_SEPERATOR;
 import static org.wso2.carbon.identity.image.util.StorageSystemConstants.IMAGE_STORE;
+import static org.wso2.carbon.identity.image.util.StorageSystemConstants.SP;
 import static org.wso2.carbon.identity.image.util.StorageSystemConstants.SYSTEM_PROPERTY_CARBON_HOME;
+import static org.wso2.carbon.identity.image.util.StorageSystemConstants.USER;
 
 /**
  * This is the implementation class to store images in to local file system.
@@ -96,6 +101,11 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
                         FileChannel fileChannel = fileOutputStream.getChannel();
                         ReadableByteChannel readableByteChannel = Channels.newChannel(fileInputStream)) {
                     fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+                    if (LOGGER.isDebugEnabled()) {
+                        byte[] imageByteCount = IOUtils.toByteArray(fileInputStream);
+                        LOGGER.debug(String.format("Writing image data of size %s to a file named %s at location %s.",
+                                String.valueOf(imageByteCount.length), uuid, targetLocation.toString()));
+                    }
                 }
 
                 FileTime createdTime = (FileTime) Files.getAttribute(targetLocation, "creationTime");
@@ -105,6 +115,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
                 return uuid + ID_SEPERATOR + uuidHash + ID_SEPERATOR + timeStampAsString;
             }
         }
+        // TODO: 11/29/19 Add proper warnings for e.g Disk Full /File permission scenarios.
 
         return null;
     }
@@ -119,18 +130,17 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
         if (fileStorageLocation != null) {
             switch (type) {
-            case "idp":
-                return Files.createDirectories(fileStorageLocation.resolve("idp").resolve(String.valueOf(tenantId)));
+            case IDP:
+                return Files.createDirectories(fileStorageLocation.resolve(IDP).resolve(String.valueOf(tenantId)));
 
-            case "app":
-                return Files.createDirectories(fileStorageLocation.resolve("app").resolve(String.valueOf(tenantId)));
+            case SP:
+                return Files.createDirectories(fileStorageLocation.resolve(SP).resolve(String.valueOf(tenantId)));
 
-            case "user":
-                return Files.createDirectories(fileStorageLocation.resolve("user").resolve(String.valueOf(tenantId)));
+            case USER:
+                return Files.createDirectories(fileStorageLocation.resolve(USER).resolve(String.valueOf(tenantId)));
 
             default:
-                return Files
-                        .createDirectories(fileStorageLocation.resolve("default").resolve(String.valueOf(tenantId)));
+                return Files.createDirectories(fileStorageLocation.resolve(DEFAULT).resolve(String.valueOf(tenantId)));
             }
         }
 
@@ -144,17 +154,17 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
                 .resolve(Paths.get(IMAGE_STORE));
 
         switch (type) {
-        case "idp":
-            return fileStorageLocation.resolve("idp");
+        case IDP:
+            return fileStorageLocation.resolve(IDP);
 
-        case "app":
-            return fileStorageLocation.resolve("app");
+        case SP:
+            return fileStorageLocation.resolve(SP);
 
-        case "user":
-            return fileStorageLocation.resolve("user");
+        case USER:
+            return fileStorageLocation.resolve(USER);
 
         default:
-            return fileStorageLocation.resolve("default");
+            return fileStorageLocation.resolve(DEFAULT);
         }
     }
 
@@ -178,11 +188,8 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
     private boolean validate(String[] urlElements, long createdTime) {
 
-        if (urlElements[2].equals(Long.toString(createdTime)) && urlElements[1]
-                .equals(new StorageSystemUtil().calculateUUIDHash(urlElements[0], urlElements[2]))) {
-            return true;
-        }
-        return false;
+        return urlElements[2].equals(Long.toString(createdTime)) && urlElements[1]
+                .equals(new StorageSystemUtil().calculateUUIDHash(urlElements[0], urlElements[2]));
 
     }
 
@@ -191,13 +198,14 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         String imageCategoryType = getImageCategoryType(type);
         Path fileStorageLocation = createSpecificDirectory(imageCategoryType, tenantId);
-        String fileName = urlElements[0];
-        Path filePath = fileStorageLocation.resolve(fileName).normalize();
-        FileTime createdTime = (FileTime) Files.getAttribute(filePath, "creationTime");
+        if (fileStorageLocation != null) {
+            String fileName = urlElements[0];
+            Path filePath = fileStorageLocation.resolve(fileName).normalize();
+            FileTime createdTime = (FileTime) Files.getAttribute(filePath, "creationTime");
 
-        if (validate(urlElements, createdTime.toMillis())) {
-            InputStream inputStream = Files.newInputStream(filePath);
-            return inputStream;
+            if (validate(urlElements, createdTime.toMillis())) {
+                return Files.newInputStream(filePath);
+            }
         }
         return null;
     }
@@ -206,16 +214,16 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
         switch (type) {
         case "i":
-            return "idp";
+            return IDP;
 
         case "a":
-            return "app";
+            return SP;
 
         case "u":
-            return "user";
+            return USER;
 
         default:
-            return "default";
+            return DEFAULT;
         }
     }
 

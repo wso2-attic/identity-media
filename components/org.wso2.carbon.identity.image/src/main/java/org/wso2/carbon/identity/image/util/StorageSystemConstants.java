@@ -25,4 +25,8 @@ public class StorageSystemConstants {
     public static final String ID_SEPERATOR = "_";
     public static final String SYSTEM_PROPERTY_CARBON_HOME = "carbon.home";
     public static final String IMAGE_STORE = "repository/images";
+    public static final String IDP = "idp";
+    public static final String SP = "app";
+    public static final String USER = "user";
+    public static final String DEFAULT = "default";
 }

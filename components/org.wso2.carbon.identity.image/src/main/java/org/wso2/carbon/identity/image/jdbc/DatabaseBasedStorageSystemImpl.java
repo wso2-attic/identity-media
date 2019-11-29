@@ -16,6 +16,7 @@
 package org.wso2.carbon.identity.image.jdbc;
 
 import org.wso2.carbon.identity.image.StorageSystem;
+import org.wso2.carbon.identity.image.exception.StorageSystemException;
 
 import java.io.InputStream;
 
@@ -25,18 +26,18 @@ import java.io.InputStream;
 public class DatabaseBasedStorageSystemImpl implements StorageSystem {
 
     @Override
-    public String addFile(InputStream inputStream, String type, String uuid, String tenantDomain) {
-
-        return null;
+    public String addFile(InputStream inputStream, String type, String uuid, String tenantDomain)
+            throws StorageSystemException {
+        throw new UnsupportedOperationException("Database based add file operation not supported.");
     }
 
     @Override
-    public InputStream getFile(String id, String type, String tenantDomain) {
-        return null;
+    public InputStream getFile(String id, String type, String tenantDomain) throws StorageSystemException {
+        throw new UnsupportedOperationException("Database based get file operation not supported.");
     }
 
     @Override
-    public void deleteFile(String id, String type, String tenantDomain) {
-
+    public void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException {
+        throw new UnsupportedOperationException("Database based delete file operation not supported.");
     }
 }
