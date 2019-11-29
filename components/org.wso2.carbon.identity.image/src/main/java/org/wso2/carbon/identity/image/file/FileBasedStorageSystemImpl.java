@@ -63,17 +63,18 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public InputStream getFile(String id, String type, String tenantDomain) throws StorageSystemException {
+    public byte[] getFile(String id, String type, String tenantDomain) throws StorageSystemException {
 
         String[] urlElements = retrieveUrlElements(id);
         InputStream inputStream;
         try {
             inputStream = getImageFile(urlElements, type, tenantDomain);
+            return IOUtils.toByteArray(inputStream);
         } catch (IOException e) {
             String errorMsg = String.format("Error while retrieving the stored file of type %s.", type);
             throw new StorageSystemException(errorMsg, e);
         }
-        return inputStream;
+
     }
 
     @Override
@@ -110,7 +111,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
                 FileTime createdTime = (FileTime) Files.getAttribute(targetLocation, "creationTime");
                 String timeStampAsString = Long.toString(createdTime.toMillis());
-                String uuidHash = new StorageSystemUtil().calculateUUIDHash(uuid, timeStampAsString);
+                String uuidHash = StorageSystemUtil.calculateUUIDHash(uuid, timeStampAsString);
 
                 return uuid + ID_SEPERATOR + uuidHash + ID_SEPERATOR + timeStampAsString;
             }
@@ -189,7 +190,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     private boolean validate(String[] urlElements, long createdTime) {
 
         return urlElements[2].equals(Long.toString(createdTime)) && urlElements[1]
-                .equals(new StorageSystemUtil().calculateUUIDHash(urlElements[0], urlElements[2]));
+                .equals(StorageSystemUtil.calculateUUIDHash(urlElements[0], urlElements[2]));
 
     }
 

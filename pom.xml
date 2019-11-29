@@ -112,6 +112,8 @@
 
     <modules>
         <module>components/org.wso2.carbon.identity.image</module>
+        <module>features/org.wso2.carbon.identity.image.server.feature</module>
+        <module>features/org.wso2.carbon.identity.content.repository.feature</module>
     </modules>
 
     <dependencyManagement>
@@ -268,6 +270,13 @@
         <carbon.identity.framework.version>5.14.78</carbon.identity.framework.version>
         <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 6.0.0)
         </carbon.identity.framework.imp.pkg.version.range>
+        <org.apache.log4j.imp.pkg.version.range>[1.2,2)</org.apache.log4j.imp.pkg.version.range>
+        <org.wso2.carbon.identity.image.file.imp.pkg.version.range>[1.0,2)
+        </org.wso2.carbon.identity.image.file.imp.pkg.version.range>
+        <user.core.imp.pkg.version.range>[4.5,5)</user.core.imp.pkg.version.range>
+        <org.apache.commons.io.imp.pkg.version.range>[2.4,3)</org.apache.commons.io.imp.pkg.version.range>
+        <org.apache.commons.codec.imp.pkg.version.range>[1.4,2)</org.apache.commons.codec.imp.pkg.version.range>
+        <org.apache.commons.lang.imp.pkg.version.range>[2.6,3)</org.apache.commons.lang.imp.pkg.version.range>
         <commons-codec.version>1.4.0.wso2v1</commons-codec.version>
         <carbon.p2.plugin.version>1.5.3</carbon.p2.plugin.version>
         <maven.checkstyleplugin.excludes>**/gen/**/*</maven.checkstyleplugin.excludes>

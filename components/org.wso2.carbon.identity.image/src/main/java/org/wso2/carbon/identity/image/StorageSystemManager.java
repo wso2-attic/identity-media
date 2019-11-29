@@ -39,15 +39,15 @@ public class StorageSystemManager {
      *
      * @param inputStream  the inputstream of the uploaded file
      * @param type         whether, file is of type, idp/sp/user
-     * @param tenantDomain
+     * @param tenantDomain tenantdomain of the service call.
      * @return unique id related to the uploaded resource. unique id is calculated by concatenating uuid,a unique
      * hash value and a timestamp value.
+     * @throws StorageSystemException
      */
     public String addFile(InputStream inputStream, String type, String tenantDomain) throws StorageSystemException {
 
-        String storageType = readStorageTypeFromConfig();
-        String uuid = new StorageSystemUtil().calculateUUID();
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(storageType);
+        String uuid = StorageSystemUtil.calculateUUID();
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
         if (storageSystemFactory != null) {
             return storageSystemFactory.getInstance().addFile(inputStream, type, uuid, tenantDomain);
         }
@@ -58,21 +58,37 @@ public class StorageSystemManager {
     /**
      * Method which retrieves a stored file.
      *
-     * @param id   unique id related to the requesting resource. (This id consists of uuid, a unique hash value and a
-     *             timestamp.)
-     * @param type Type of image (could be i,a, or u) i stands for idp,a stands for app, u stands for user
+     * @param id           unique id related to the requesting resource. (This id consists of uuid, a unique hash value
+     *                     and a timestamp.)
+     * @param type         Type of image (could be i,a, or u) i stands for idp,a stands for app, u stands for user
+     * @param tenantDomain tenantdomain of the service call.
      * @return inputstream of the file.
+     * @throws StorageSystemException
      */
-    public InputStream getFile(String id, String type, String tenantDomain) throws StorageSystemException {
+    public byte[] getFile(String id, String type, String tenantDomain) throws StorageSystemException {
 
-        String storageType = readStorageTypeFromConfig();
-        return getStorageSystemFactory(storageType).getInstance().getFile(id, type, tenantDomain);
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        if (storageSystemFactory != null) {
+            return storageSystemFactory.getInstance().getFile(id, type, tenantDomain);
+        }
+        return new byte[0];
     }
 
+    /**
+     * Method which deletes a stored file.
+     *
+     * @param id           unique id related to the requesting resource. (This id consists of uuid, a unique hash value
+     *                     and a timestamp.)
+     * @param type         Type of image (could be i,a, or u) i stands for idp,a stands for app, u stands for user
+     * @param tenantDomain tenantdomain of the service call.
+     * @throws StorageSystemException
+     */
     public void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException {
 
-        String storageType = readStorageTypeFromConfig();
-        getStorageSystemFactory(storageType).getInstance().deleteFile(id, type, tenantDomain);
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        if (storageSystemFactory != null) {
+            storageSystemFactory.getInstance().deleteFile(id, type, tenantDomain);
+        }
 
     }
 

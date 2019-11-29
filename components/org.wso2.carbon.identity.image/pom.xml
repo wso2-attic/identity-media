@@ -107,17 +107,15 @@
                         <Import-Package>
                             org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
                             org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
-                            org.apache.log4j;version="[1.2,2)",
-                            org.wso2.carbon.identity.image.file;version="[1.0,2)",
-                            org.wso2.carbon.identity.image.jdbc;version="[1.0,2)",
-                            org.wso2.carbon.user.core.service;version="[4.5,5)",
-                            org.apache.commons.io;version="[2.4,3)",
+                            org.apache.log4j;version="${org.apache.log4j.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.image.file;version="${org.wso2.carbon.identity.image.file.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.image.jdbc;version="${org.wso2.carbon.identity.image.file.imp.pkg.version.range}",
+                            org.wso2.carbon.user.core.service;version="${user.core.imp.pkg.version.range}",
+                            org.apache.commons.io;version="${org.apache.commons.io.imp.pkg.version.range}",
                             org.wso2.carbon.identity.core.*;version="${carbon.identity.framework.imp.pkg.version.range}",
-                            org.apache.commons.codec.digest;version="[1.4,2)",
-                            org.apache.commons.lang;version="[2.6,3)"
+                            org.apache.commons.codec.digest;version="${org.apache.commons.codec.imp.pkg.version.range}",
+                            org.apache.commons.lang;version="${org.apache.commons.lang.imp.pkg.version.range}"
                         </Import-Package>
-
-
                     </instructions>
                 </configuration>
             </plugin>

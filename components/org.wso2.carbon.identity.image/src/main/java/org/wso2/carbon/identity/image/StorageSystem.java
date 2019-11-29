@@ -27,7 +27,7 @@ public interface StorageSystem {
     String addFile(InputStream inputStream, String type, String uuid, String tenantDomain)
             throws StorageSystemException;
 
-    InputStream getFile(String id, String type, String tenantDomain) throws StorageSystemException;
+    byte[] getFile(String id, String type, String tenantDomain) throws StorageSystemException;
 
     void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException;
 
