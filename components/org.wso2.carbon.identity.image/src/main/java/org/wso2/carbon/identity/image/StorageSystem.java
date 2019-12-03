@@ -32,4 +32,3 @@ public interface StorageSystem {
     void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException;
 
 }
-

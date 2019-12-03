@@ -24,7 +24,6 @@
     <test name="identity-image-tests" preserve-order="true" parallel="false">
         <classes>
             <class name="org.wso2.carbon.identity.image.StorageSystemManagerTest"></class>
-            <class name="org.wso2.carbon.identity.image.FileBasedStorageSystemImplTest"></class>
         </classes>
     </test>
 </suite>

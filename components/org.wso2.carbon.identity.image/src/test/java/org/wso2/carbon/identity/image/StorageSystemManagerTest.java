@@ -15,21 +15,28 @@
  */
 package org.wso2.carbon.identity.image;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.powermock.reflect.Whitebox;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.image.exception.StorageSystemException;
 import org.wso2.carbon.identity.image.file.FileBasedStorageSystemFactory;
 import org.wso2.carbon.identity.image.file.FileBasedStorageSystemImpl;
 import org.wso2.carbon.identity.image.internal.ImageServiceDataHolder;
 import org.wso2.carbon.identity.image.jdbc.DatabaseBasedStorageSystemFactory;
+import org.wso2.carbon.identity.image.util.StorageSystemUtil;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.URL;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -37,7 +44,8 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @PrepareForTest({
-                        IdentityUtil.class, ImageServiceDataHolder.class, FileBasedStorageSystemImpl.class
+                        IdentityUtil.class, ImageServiceDataHolder.class, FileBasedStorageSystemImpl.class,
+                        StorageSystemUtil.class, IdentityTenantUtil.class
                 })
 public class StorageSystemManagerTest extends PowerMockTestCase {
 
@@ -150,15 +158,29 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
     public void testAddImageUsingFileBasedStorage() throws Exception {
         mockStatic(ImageServiceDataHolder.class);
         when(ImageServiceDataHolder.getInstance()).thenReturn(imageServiceDataHolder);
-        FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
+        FileBasedStorageSystemImpl fileBasedStorageSystem = spy(new FileBasedStorageSystemImpl());
         when(fileBasedStorageSystemFactory.getInstance()).thenReturn(fileBasedStorageSystem);
-
-        when(fileBasedStorageSystem.addFile(any(InputStream.class), anyString(), anyString(), anyString()))
-                .thenReturn("imageuuid");
-        InputStream inputStream = mock(InputStream.class);
+        mockStatic(StorageSystemUtil.class);
+        String mockUUID = "30d0325e-40bc-45f3-845e-f13dd130e963";
+        when(StorageSystemUtil.calculateUUID()).thenReturn(mockUUID);
+        ClassLoader classLoader = getClass().getClassLoader();
+        File imageFile = new File(classLoader.getResource("profilepic.png").getFile());
+        InputStream fileInputStream = new FileInputStream(imageFile);
+        mockStatic(IdentityTenantUtil.class);
         String type = "idp";
         String tenantDomain = "carbon.super";
-        Assert.assertEquals(storageSystemManager.addFile(inputStream, type, tenantDomain), "imageuuid");
+        when(IdentityTenantUtil.getTenantId(tenantDomain)).thenReturn(-1234);
+        URL tevaUrl = getClass().getClassLoader().getResource("sampleimage");
+        String tevaTestFolder = new File(tevaUrl.toURI()).getAbsolutePath();
+        System.setProperty("upload.location", tevaTestFolder);
+        mockStatic(Long.class);
+        String timeStampAsString = "1575350130000";
+        when(Long.toString(anyLong())).thenReturn(timeStampAsString);
+        String uuidHash = DigestUtils.sha256Hex(mockUUID + timeStampAsString);
+        when(StorageSystemUtil.calculateUUIDHash(mockUUID, timeStampAsString)).thenReturn(uuidHash);
+
+        String url = storageSystemManager.addFile(fileInputStream, type, tenantDomain);
+        Assert.assertEquals(url, mockUUID + "_" + uuidHash + "_" + timeStampAsString);
 
     }
 
@@ -175,6 +197,22 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         String tenantDomain = "carbon.super";
         Assert.assertEquals(storageSystemManager.addFile(inputStream, type, tenantDomain), "");
 
+    }
+
+    @Test
+    public void testGetImageUsingFileBasedStorage() throws StorageSystemException {
+
+        mockStatic(ImageServiceDataHolder.class);
+        when(ImageServiceDataHolder.getInstance()).thenReturn(imageServiceDataHolder);
+        FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
+        when(fileBasedStorageSystemFactory.getInstance()).thenReturn(fileBasedStorageSystem);
+
+        byte[] imageBytes = new byte[10];
+        when(fileBasedStorageSystem.getFile(anyString(), anyString(), anyString())).thenReturn(imageBytes);
+        String id = "imageuuid";
+        String type = "idp";
+        String tenantDomain = "carbon.super";
+        Assert.assertEquals(storageSystemManager.getFile(id, type, tenantDomain), imageBytes);
     }
 
 }
