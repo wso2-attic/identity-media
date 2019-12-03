@@ -29,4 +29,6 @@ public class StorageSystemConstants {
     public static final String SP = "app";
     public static final String USER = "user";
     public static final String DEFAULT = "default";
+    public static final String CONFIGURABLE_UPLOAD_LOCATION = "upload.location";
+    public static final String FILE_CREATION_TIME_ATTRIBUTE = "creationTime";
 }

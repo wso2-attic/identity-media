@@ -42,14 +42,23 @@ public class StorageSystemManager {
      * @param tenantDomain tenantdomain of the service call.
      * @return unique id related to the uploaded resource. unique id is calculated by concatenating uuid,a unique
      * hash value and a timestamp value.
-     * @throws StorageSystemException
+     * @throws StorageSystemException Exception related to file upload
      */
     public String addFile(InputStream inputStream, String type, String tenantDomain) throws StorageSystemException {
 
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("Upload image for category %s and tenant domain %s.", type, tenantDomain));
+        }
         String uuid = StorageSystemUtil.calculateUUID();
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("The unique id of the uploaded images is %s.", uuid));
+        }
         StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
         if (storageSystemFactory != null) {
             return storageSystemFactory.getInstance().addFile(inputStream, type, uuid, tenantDomain);
+        }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("StorageSystemFactory object is null. Returning empty string.");
         }
         return "";
 
@@ -63,13 +72,19 @@ public class StorageSystemManager {
      * @param type         Type of image (could be i,a, or u) i stands for idp,a stands for app, u stands for user
      * @param tenantDomain tenantdomain of the service call.
      * @return inputstream of the file.
-     * @throws StorageSystemException
+     * @throws StorageSystemException Exception related to retrieving the image
      */
     public byte[] getFile(String id, String type, String tenantDomain) throws StorageSystemException {
 
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("Download image for category %s and tenant domain %s.", type, tenantDomain));
+        }
         StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
         if (storageSystemFactory != null) {
             return storageSystemFactory.getInstance().getFile(id, type, tenantDomain);
+        }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("StorageSystemFactory object is null. Returning empty byte array.");
         }
         return new byte[0];
     }
@@ -81,12 +96,15 @@ public class StorageSystemManager {
      *                     and a timestamp.)
      * @param type         Type of image (could be i,a, or u) i stands for idp,a stands for app, u stands for user
      * @param tenantDomain tenantdomain of the service call.
-     * @throws StorageSystemException
+     * @throws StorageSystemException Exception related to file deletion.
      */
     public void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException {
 
         StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
         if (storageSystemFactory != null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("Delete image for category %s and tenant domain %s.", type, tenantDomain));
+            }
             storageSystemFactory.getInstance().deleteFile(id, type, tenantDomain);
         }
 
@@ -95,7 +113,13 @@ public class StorageSystemManager {
     private String readStorageTypeFromConfig() {
 
         String contentStoreType = IdentityUtil.getProperty("ContentStore.Type");
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("The configured content store type is %s.", contentStoreType));
+        }
         if (StringUtils.isEmpty(contentStoreType)) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("ContentStore.Type is not configured in identity.xml. Proceeding with the default value.");
+            }
             contentStoreType = "org.wso2.carbon.identity.image.file.FileBasedStorageSystemImpl";
         }
         return contentStoreType;

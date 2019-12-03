@@ -34,7 +34,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 
+import static org.wso2.carbon.identity.image.util.StorageSystemConstants.CONFIGURABLE_UPLOAD_LOCATION;
 import static org.wso2.carbon.identity.image.util.StorageSystemConstants.DEFAULT;
+import static org.wso2.carbon.identity.image.util.StorageSystemConstants.FILE_CREATION_TIME_ATTRIBUTE;
 import static org.wso2.carbon.identity.image.util.StorageSystemConstants.IDP;
 import static org.wso2.carbon.identity.image.util.StorageSystemConstants.ID_SEPERATOR;
 import static org.wso2.carbon.identity.image.util.StorageSystemConstants.IMAGE_STORE;
@@ -54,6 +56,11 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             throws StorageSystemException {
 
         try {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(
+                        String.format("Uploading image file of type %s, unique id of %s and in tenant domain %s", type,
+                                uuid, tenantDomain));
+            }
             return uploadImageUsingChannels(inputStream, type, uuid, tenantDomain);
         } catch (IOException e) {
             String errorMsg = String.format("Error while uploading image to file system for %s type.", type);
@@ -65,11 +72,14 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     @Override
     public byte[] getFile(String id, String type, String tenantDomain) throws StorageSystemException {
 
-        String[] urlElements = retrieveUrlElements(id);
+        String[] imageUniqueIdElements = retrieveImageUniqueIdElements(id);
         InputStream inputStream;
         try {
-            inputStream = getImageFile(urlElements, type, tenantDomain);
-            return IOUtils.toByteArray(inputStream);
+            inputStream = getImageFile(imageUniqueIdElements, type, tenantDomain);
+            if (inputStream != null) {
+                return IOUtils.toByteArray(inputStream);
+            }
+            return new byte[0];
         } catch (IOException e) {
             String errorMsg = String.format("Error while retrieving the stored file of type %s.", type);
             throw new StorageSystemException(errorMsg, e);
@@ -80,7 +90,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     @Override
     public void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException {
 
-        String[] urlElements = retrieveUrlElements(id);
+        String[] urlElements = retrieveImageUniqueIdElements(id);
         try {
             deleteImageFile(urlElements, type, tenantDomain);
         } catch (IOException e) {
@@ -94,79 +104,93 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             throws IOException {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-        Path imagesPath = createSpecificDirectory(type, tenantId);
+        Path imagesPath = createStorageDirectory(type, tenantId, uuid);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("Uploading image file to directory %s, for tenant id %d", imagesPath.toString(),
+                    tenantId));
+        }
         if (imagesPath != null) {
             Path targetLocation = imagesPath.resolve(uuid);
-            if (targetLocation != null) {
-                try (FileOutputStream fileOutputStream = new FileOutputStream(targetLocation.toFile());
-                        FileChannel fileChannel = fileOutputStream.getChannel();
-                        ReadableByteChannel readableByteChannel = Channels.newChannel(fileInputStream)) {
-                    fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
-                    if (LOGGER.isDebugEnabled()) {
-                        byte[] imageByteCount = IOUtils.toByteArray(fileInputStream);
-                        LOGGER.debug(String.format("Writing image data of size %s to a file named %s at location %s.",
-                                String.valueOf(imageByteCount.length), uuid, targetLocation.toString()));
-                    }
+            try (FileOutputStream fileOutputStream = new FileOutputStream(targetLocation.toFile());
+                    FileChannel fileChannel = fileOutputStream.getChannel();
+                    ReadableByteChannel readableByteChannel = Channels.newChannel(fileInputStream)) {
+                fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+                if (LOGGER.isDebugEnabled()) {
+                    byte[] imageByteCount = IOUtils.toByteArray(fileInputStream);
+                    LOGGER.debug(String.format("Writing image data of size %d to a file named %s at location %s.",
+                            imageByteCount.length, uuid, targetLocation.toString()));
                 }
-
-                FileTime createdTime = (FileTime) Files.getAttribute(targetLocation, "creationTime");
-                String timeStampAsString = Long.toString(createdTime.toMillis());
-                String uuidHash = StorageSystemUtil.calculateUUIDHash(uuid, timeStampAsString);
-
-                return uuid + ID_SEPERATOR + uuidHash + ID_SEPERATOR + timeStampAsString;
             }
+
+            FileTime createdTime = (FileTime) Files.getAttribute(targetLocation, FILE_CREATION_TIME_ATTRIBUTE);
+            String timeStampAsString = Long.toString(createdTime.toMillis());
+            String uuidHash = StorageSystemUtil.calculateUUIDHash(uuid, timeStampAsString);
+
+            return uuid + ID_SEPERATOR + uuidHash + ID_SEPERATOR + timeStampAsString;
         }
         // TODO: 11/29/19 Add proper warnings for e.g Disk Full /File permission scenarios.
 
-        return null;
+        return "";
     }
 
-    private Path createSpecificDirectory(String type, int tenantId) throws IOException {
+    private Path createStorageDirectory(String type, int tenantId, String uuid) throws IOException {
 
-        Path carbonHomeLocation = Paths.get(System.getProperty(SYSTEM_PROPERTY_CARBON_HOME));
         Path fileStorageLocation = null;
-        if (carbonHomeLocation != null) {
-            fileStorageLocation = carbonHomeLocation.resolve(Paths.get(IMAGE_STORE));
+        Path configurableRootFolder = null;
+        String systemPropertyForRootFolder = System.getProperty(CONFIGURABLE_UPLOAD_LOCATION);
+        if (systemPropertyForRootFolder != null) {
+            configurableRootFolder = Paths.get(systemPropertyForRootFolder);
+
         }
+        if (configurableRootFolder == null) {
+            configurableRootFolder = Paths.get(System.getProperty(SYSTEM_PROPERTY_CARBON_HOME));
+        }
+
+        if (configurableRootFolder != null) {
+            fileStorageLocation = configurableRootFolder.resolve(Paths.get(IMAGE_STORE));
+        }
+
+        Path imagesPath = null;
 
         if (fileStorageLocation != null) {
             switch (type) {
             case IDP:
-                return Files.createDirectories(fileStorageLocation.resolve(IDP).resolve(String.valueOf(tenantId)));
+                imagesPath = Files
+                        .createDirectories(fileStorageLocation.resolve(IDP).resolve(String.valueOf(tenantId)));
+                break;
 
             case SP:
-                return Files.createDirectories(fileStorageLocation.resolve(SP).resolve(String.valueOf(tenantId)));
+                imagesPath = Files.createDirectories(fileStorageLocation.resolve(SP).resolve(String.valueOf(tenantId)));
+                break;
 
             case USER:
-                return Files.createDirectories(fileStorageLocation.resolve(USER).resolve(String.valueOf(tenantId)));
+                imagesPath = Files
+                        .createDirectories(fileStorageLocation.resolve(USER).resolve(String.valueOf(tenantId)));
+                break;
 
             default:
-                return Files.createDirectories(fileStorageLocation.resolve(DEFAULT).resolve(String.valueOf(tenantId)));
+                imagesPath = Files
+                        .createDirectories(fileStorageLocation.resolve(DEFAULT).resolve(String.valueOf(tenantId)));
             }
         }
 
-        return null;
+        return createUniqueDirectoryStructure(imagesPath, uuid);
 
     }
 
-    private Path generateImageCategoryPath(String type) {
+    private Path createUniqueDirectoryStructure(Path path, String uuid) throws IOException {
 
-        Path fileStorageLocation = Paths.get(System.getProperty(SYSTEM_PROPERTY_CARBON_HOME))
-                .resolve(Paths.get(IMAGE_STORE));
-
-        switch (type) {
-        case IDP:
-            return fileStorageLocation.resolve(IDP);
-
-        case SP:
-            return fileStorageLocation.resolve(SP);
-
-        case USER:
-            return fileStorageLocation.resolve(USER);
-
-        default:
-            return fileStorageLocation.resolve(DEFAULT);
+        String[] uuidSplit = uuid.split("-");
+        Path uniquePath;
+        if (path != null) {
+            uniquePath = path;
+            for (int i = 1; i <= uuidSplit.length; i++) {
+                uniquePath = uniquePath.resolve(uuidSplit[uuidSplit.length - i]);
+            }
+            return Files.createDirectories(uniquePath);
         }
+        return null;
+
     }
 
     /**
@@ -178,7 +202,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
      * @param id url fragment defining the unique id of the resource
      * @return String array containing uuid,unique-hash and timestamp
      */
-    private String[] retrieveUrlElements(String id) {
+    private String[] retrieveImageUniqueIdElements(String id) {
 
         if (id == null) {
             return new String[0];
@@ -198,7 +222,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         String imageCategoryType = getImageCategoryType(type);
-        Path fileStorageLocation = createSpecificDirectory(imageCategoryType, tenantId);
+        Path fileStorageLocation = createStorageDirectory(imageCategoryType, tenantId, urlElements[0]);
         if (fileStorageLocation != null) {
             String fileName = urlElements[0];
             Path filePath = fileStorageLocation.resolve(fileName).normalize();
@@ -232,13 +256,15 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         String imageCategoryType = getImageCategoryType(type);
-        Path fileStorageLocation = generateImageCategoryPath(imageCategoryType);
-        String fileName = urlElements[0];
-        Path filePath = fileStorageLocation.resolve(String.valueOf(tenantId)).resolve(fileName).normalize();
-        FileTime createdTime = (FileTime) Files.getAttribute(filePath, "creationTime");
+        Path fileStorageLocation = createStorageDirectory(imageCategoryType, tenantId, urlElements[0]);
+        if (fileStorageLocation != null) {
+            String fileName = urlElements[0];
+            Path filePath = fileStorageLocation.resolve(fileName).normalize();
+            FileTime createdTime = (FileTime) Files.getAttribute(filePath, "creationTime");
 
-        if (validate(urlElements, createdTime.toMillis())) {
-            Files.deleteIfExists(filePath);
+            if (validate(urlElements, createdTime.toMillis())) {
+                Files.deleteIfExists(filePath);
+            }
         }
 
     }

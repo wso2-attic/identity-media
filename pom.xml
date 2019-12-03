@@ -267,7 +267,7 @@
         <carbon.kernel.version>4.5.0</carbon.kernel.version>
         <carbon.kernel.feature.version>4.5.0</carbon.kernel.feature.version>
         <identity.content.exp.pkg.version>${project.version}</identity.content.exp.pkg.version>
-        <carbon.identity.framework.version>5.14.78</carbon.identity.framework.version>
+        <carbon.identity.framework.version>5.15.21</carbon.identity.framework.version>
         <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 6.0.0)
         </carbon.identity.framework.imp.pkg.version.range>
         <org.apache.log4j.imp.pkg.version.range>[1.2,2)</org.apache.log4j.imp.pkg.version.range>
