@@ -25,6 +25,7 @@ import org.wso2.carbon.identity.image.exception.StorageSystemException;
 import org.wso2.carbon.identity.image.internal.ImageServiceDataHolder;
 import org.wso2.carbon.identity.image.util.StorageSystemUtil;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 /**
@@ -108,6 +109,30 @@ public class StorageSystemManager {
             storageSystemFactory.getInstance().deleteFile(id, type, tenantDomain);
         }
 
+    }
+
+    /**
+     * A method to do any transformation to the inputstream.
+     *
+     * @param id           unique id related to the requesting resource. (This id consists of uuid, a unique hash
+     *                     value and a timestamp.)
+     * @param type         Type of image (could be i,a, or u) i stands for idp,a stands for app, u stands for user
+     * @param tenantDomain tenantdomain of the service call.
+     * @param inputStream  inputstream of the file.
+     * @return transformed inputstream.
+     * @throws StorageSystemException
+     */
+    public InputStream transform(String id, String type, String tenantDomain, InputStream inputStream)
+            throws StorageSystemException {
+
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        if (storageSystemFactory != null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("Delete image for category %s and tenant domain %s.", type, tenantDomain));
+            }
+            return storageSystemFactory.getInstance().transform(id, type, tenantDomain, inputStream);
+        }
+        return new ByteArrayInputStream(new byte[0]);
     }
 
     private String readStorageTypeFromConfig() {

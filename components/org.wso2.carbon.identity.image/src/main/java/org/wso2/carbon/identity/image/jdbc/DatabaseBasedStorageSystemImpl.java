@@ -40,4 +40,10 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
     public void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException {
         throw new UnsupportedOperationException("Database based delete file operation not supported.");
     }
+
+    @Override
+    public InputStream transform(String id, String type, String tenantDomain, InputStream inputStream)
+            throws StorageSystemException {
+        return inputStream;
+    }
 }

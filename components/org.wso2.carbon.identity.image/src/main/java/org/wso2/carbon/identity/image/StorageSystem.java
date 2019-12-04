@@ -31,4 +31,7 @@ public interface StorageSystem {
 
     void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException;
 
+    InputStream transform(String id, String type, String tenantDomain, InputStream inputStream)
+            throws StorageSystemException;
+
 }

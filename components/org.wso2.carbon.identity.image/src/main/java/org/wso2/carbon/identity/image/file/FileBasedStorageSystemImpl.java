@@ -100,6 +100,12 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
     }
 
+    @Override
+    public InputStream transform(String id, String type, String tenantDomain, InputStream inputStream)
+            throws StorageSystemException {
+        return inputStream;
+    }
+
     private String uploadImageUsingChannels(InputStream fileInputStream, String type, String uuid, String tenantDomain)
             throws IOException {
 
