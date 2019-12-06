@@ -54,9 +54,11 @@ public class StorageSystemManager {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.format("The unique id of the uploaded images is %s.", uuid));
         }
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
-        if (storageSystemFactory != null) {
-            return storageSystemFactory.getInstance().addFile(inputStream, type, uuid, tenantDomain);
+        if (type != null && tenantDomain != null) {
+            StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+            if (storageSystemFactory != null) {
+                return storageSystemFactory.getInstance().addFile(inputStream, type, uuid, tenantDomain);
+            }
         }
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("StorageSystemFactory object is null. Returning empty string.");
