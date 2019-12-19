@@ -21,19 +21,15 @@ package org.wso2.carbon.identity.image;
 import java.io.File;
 
 /**
- * This class allows to store files. CXF handle file data more efficiently than byte data.
+ * Interface describing the file content.
  */
-public class FileContent implements ContentData {
+public interface FileContent extends DataContent {
 
-    private File file;
-
-    public File getFile() {
-
-        return file;
-    }
-
-    public void setFile(File file) {
-
-        this.file = file;
-    }
+    /**
+     * Returns the file containing the data.
+     * Use proper File open/close mechanism to access the data.
+     *
+     * @return
+     */
+    File getFile();
 }

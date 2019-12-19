@@ -19,7 +19,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.image.FileContent;
+import org.wso2.carbon.identity.image.DataContent;
+import org.wso2.carbon.identity.image.FileContentImpl;
 import org.wso2.carbon.identity.image.StorageSystem;
 import org.wso2.carbon.identity.image.exception.StorageSystemException;
 import org.wso2.carbon.identity.image.util.StorageSystemUtil;
@@ -72,14 +73,13 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public FileContent getFile(String id, String type, String tenantDomain) throws StorageSystemException {
+    public DataContent getFile(String id, String type, String tenantDomain) throws StorageSystemException {
 
         String[] imageUniqueIdElements = retrieveImageUniqueIdElements(id);
-        FileContent fileContent = new FileContent();
         File file;
         try {
             file = getImageFile(imageUniqueIdElements, type, tenantDomain);
-            fileContent.setFile(file);
+            FileContentImpl fileContent = new FileContentImpl(file);
             return fileContent;
         } catch (IOException e) {
             String errorMsg = String.format("Error while retrieving the stored file of type %s.", type);

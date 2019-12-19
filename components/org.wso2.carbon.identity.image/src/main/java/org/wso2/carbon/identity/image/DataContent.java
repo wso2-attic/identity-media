@@ -20,6 +20,6 @@ package org.wso2.carbon.identity.image;
 /**
  * Interface describing the type of the storage.
  */
-public interface ContentData {
+public interface DataContent {
 
 }

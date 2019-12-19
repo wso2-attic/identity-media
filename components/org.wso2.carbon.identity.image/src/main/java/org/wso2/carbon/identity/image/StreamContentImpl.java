@@ -21,16 +21,20 @@ package org.wso2.carbon.identity.image;
 import java.io.InputStream;
 
 /**
- * Interface describing the stream content.
+ * Implementation of DataContent, which encapsulates an Input Stream.
  */
-public interface StreamContent extends DataContent {
+public class StreamContentImpl implements StreamContent {
 
-    /**
-     * Returns the input stream holding the data.
-     *
-     * Client code must employ proper stream closing, after accessing the stream.
-     *
-     * @return
-     */
-    InputStream getInputStream();
+    private InputStream inputStream;
+
+    public StreamContentImpl(InputStream inputStream) {
+
+        this.inputStream = inputStream;
+    }
+
+    @Override
+    public InputStream getInputStream() {
+
+        return inputStream;
+    }
 }

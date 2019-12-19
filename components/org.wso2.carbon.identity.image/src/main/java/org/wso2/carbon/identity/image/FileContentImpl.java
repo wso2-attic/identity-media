@@ -18,19 +18,23 @@
 
 package org.wso2.carbon.identity.image;
 
-import java.io.InputStream;
+import java.io.File;
 
 /**
- * Interface describing the stream content.
+ * Implementation of FileContent, which encapsulates a file. CXF handle file data more efficiently than byte.
  */
-public interface StreamContent extends DataContent {
+public class FileContentImpl implements FileContent {
 
-    /**
-     * Returns the input stream holding the data.
-     *
-     * Client code must employ proper stream closing, after accessing the stream.
-     *
-     * @return
-     */
-    InputStream getInputStream();
+    private File file;
+
+    public FileContentImpl(File file) {
+
+        this.file = file;
+    }
+
+    @Override
+    public File getFile() {
+
+        return file;
+    }
 }
