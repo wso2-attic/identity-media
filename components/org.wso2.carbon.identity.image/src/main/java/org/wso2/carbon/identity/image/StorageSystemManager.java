@@ -77,7 +77,7 @@ public class StorageSystemManager {
      * @return inputstream of the file.
      * @throws StorageSystemException Exception related to retrieving the image
      */
-    public byte[] getFile(String id, String type, String tenantDomain) throws StorageSystemException {
+    public ContentData getFile(String id, String type, String tenantDomain) throws StorageSystemException {
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.format("Download image for category %s and tenant domain %s.", type, tenantDomain));
@@ -87,9 +87,9 @@ public class StorageSystemManager {
             return storageSystemFactory.getInstance().getFile(id, type, tenantDomain);
         }
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("StorageSystemFactory object is null. Returning empty byte array.");
+            LOGGER.debug("StorageSystemFactory object is null hence returning null.");
         }
-        return new byte[0];
+        return null;
     }
 
     /**

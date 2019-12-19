@@ -207,12 +207,14 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
         when(fileBasedStorageSystemFactory.getInstance()).thenReturn(fileBasedStorageSystem);
 
-        byte[] imageBytes = new byte[10];
-        when(fileBasedStorageSystem.getFile(anyString(), anyString(), anyString())).thenReturn(imageBytes);
+        FileContent fileContent = new FileContent();
+        File file = new File("Dummy path");
+        fileContent.setFile(file);
+        when(fileBasedStorageSystem.getFile(anyString(), anyString(), anyString())).thenReturn(fileContent);
         String id = "imageuuid";
         String type = "idp";
         String tenantDomain = "carbon.super";
-        Assert.assertEquals(storageSystemManager.getFile(id, type, tenantDomain), imageBytes);
+        Assert.assertEquals(storageSystemManager.getFile(id, type, tenantDomain), fileContent);
     }
 
 }
