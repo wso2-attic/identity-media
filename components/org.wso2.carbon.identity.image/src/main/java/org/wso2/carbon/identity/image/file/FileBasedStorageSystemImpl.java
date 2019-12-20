@@ -19,10 +19,13 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.image.DataContent;
+import org.wso2.carbon.identity.image.FileContentImpl;
 import org.wso2.carbon.identity.image.StorageSystem;
 import org.wso2.carbon.identity.image.exception.StorageSystemException;
 import org.wso2.carbon.identity.image.util.StorageSystemUtil;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,16 +73,14 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public byte[] getFile(String id, String type, String tenantDomain) throws StorageSystemException {
+    public DataContent getFile(String id, String type, String tenantDomain) throws StorageSystemException {
 
         String[] imageUniqueIdElements = retrieveImageUniqueIdElements(id);
-        InputStream inputStream;
+        File file;
         try {
-            inputStream = getImageFile(imageUniqueIdElements, type, tenantDomain);
-            if (inputStream != null) {
-                return IOUtils.toByteArray(inputStream);
-            }
-            return new byte[0];
+            file = getImageFile(imageUniqueIdElements, type, tenantDomain);
+            FileContentImpl fileContent = new FileContentImpl(file);
+            return fileContent;
         } catch (IOException e) {
             String errorMsg = String.format("Error while retrieving the stored file of type %s.", type);
             throw new StorageSystemException(errorMsg, e);
@@ -224,7 +225,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
     }
 
-    private InputStream getImageFile(String[] urlElements, String type, String tenantDomain) throws IOException {
+    private File getImageFile(String[] urlElements, String type, String tenantDomain) throws IOException {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         String imageCategoryType = getImageCategoryType(type);
@@ -235,7 +236,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             FileTime createdTime = (FileTime) Files.getAttribute(filePath, "creationTime");
 
             if (validate(urlElements, createdTime.toMillis())) {
-                return Files.newInputStream(filePath);
+                return filePath.toFile();
             }
         }
         return null;
