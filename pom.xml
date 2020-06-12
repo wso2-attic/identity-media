@@ -110,8 +110,8 @@
     </pluginRepositories>
 
     <modules>
-        <module>components/org.wso2.carbon.identity.image</module>
-        <module>features/org.wso2.carbon.identity.image.server.feature</module>
+        <module>components/org.wso2.carbon.identity.media</module>
+        <module>features/org.wso2.carbon.identity.media.server.feature</module>
         <module>features/org.wso2.carbon.identity.content.repository.feature</module>
     </modules>
 
@@ -154,6 +154,12 @@
                 <artifactId>commons-codec</artifactId>
                 <version>${commons-codec.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.googlecode.json-simple.wso2</groupId>
+                <artifactId>json-simple</artifactId>
+                <version>${json-simple.version}</version>
+            </dependency>
+            <!--Test Dependencies-->
             <dependency>
                 <groupId>org.powermock</groupId>
                 <artifactId>powermock-module-testng-common</artifactId>
@@ -270,12 +276,14 @@
         <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 6.0.0)
         </carbon.identity.framework.imp.pkg.version.range>
         <org.apache.log4j.imp.pkg.version.range>[1.2,2)</org.apache.log4j.imp.pkg.version.range>
-        <org.wso2.carbon.identity.image.file.imp.pkg.version.range>[1.0,2)
-        </org.wso2.carbon.identity.image.file.imp.pkg.version.range>
+        <org.wso2.carbon.identity.media.file.imp.pkg.version.range>[1.0,2)
+        </org.wso2.carbon.identity.media.file.imp.pkg.version.range>
+        <json-simple.version>1.1.wso2v1</json-simple.version>
         <user.core.imp.pkg.version.range>[4.5,5)</user.core.imp.pkg.version.range>
         <org.apache.commons.io.imp.pkg.version.range>[2.4,3)</org.apache.commons.io.imp.pkg.version.range>
         <org.apache.commons.codec.imp.pkg.version.range>[1.4,2)</org.apache.commons.codec.imp.pkg.version.range>
         <org.apache.commons.lang.imp.pkg.version.range>[2.6,3)</org.apache.commons.lang.imp.pkg.version.range>
+        <org.apache.commons.collections.imp.pkg.version.range>[3.2.0,4.0.0)</org.apache.commons.collections.imp.pkg.version.range>
         <commons-codec.version>1.4.0.wso2v1</commons-codec.version>
         <carbon.p2.plugin.version>1.5.3</carbon.p2.plugin.version>
         <maven.checkstyleplugin.excludes>**/gen/**/*</maven.checkstyleplugin.excludes>
