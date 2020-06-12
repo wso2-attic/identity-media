@@ -21,6 +21,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.media.DataContent;
@@ -28,13 +30,16 @@ import org.wso2.carbon.identity.media.FileContentImpl;
 import org.wso2.carbon.identity.media.StorageSystem;
 import org.wso2.carbon.identity.media.exception.StorageSystemException;
 import org.wso2.carbon.identity.media.model.FileSecurity;
+import org.wso2.carbon.identity.media.model.MediaFileDownloadData;
 import org.wso2.carbon.identity.media.model.MediaMetadata;
 import org.wso2.carbon.identity.media.util.StorageSystemUtil;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.channels.Channels;
@@ -45,10 +50,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.CONFIGURABLE_UPLOAD_LOCATION;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.DEFAULT;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_ACCESS_LEVEL_ME;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_ACCESS_LEVEL_PUBLIC;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_ACCESS_LEVEL_USER;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_CREATION_TIME_ATTRIBUTE;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_SECURITY_ALLOWED_ALL;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_SECURITY_ALLOWED_SCOPES;
@@ -73,7 +84,7 @@ import static org.wso2.carbon.identity.media.util.StorageSystemConstants.USER;
  */
 public class FileBasedStorageSystemImpl implements StorageSystem {
 
-    private static final Log LOGGER = LogFactory.getLog(FileBasedStorageSystemFactory.class);
+    private static final Log LOGGER = LogFactory.getLog(FileBasedStorageSystemImpl.class);
 
     @Override
     public String addFile(List<InputStream> inputStreams, MediaMetadata mediaMetadata, String uuid,
@@ -92,19 +103,45 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public DataContent getFile(String id, String type, String tenantDomain) throws StorageSystemException {
+    public DataContent getFile(String id, String tenantDomain, String type) throws StorageSystemException {
 
-        String[] imageUniqueIdElements = retrieveImageUniqueIdElements(id);
-        File file;
+        FileContentImpl fileContent = null;
         try {
-            file = getImageFile(imageUniqueIdElements, type, tenantDomain);
-            FileContentImpl fileContent = new FileContentImpl(file);
+            MediaFileDownloadData mediaFileDownloadData = getMediaFile(id, tenantDomain, type);
+            if (mediaFileDownloadData != null && mediaFileDownloadData.getMediaFile() != null) {
+                fileContent = new FileContentImpl(mediaFileDownloadData.getMediaFile(),
+                        mediaFileDownloadData.getResponseContentType());
+            }
             return fileContent;
         } catch (IOException e) {
-            String errorMsg = String.format("Error while retrieving the stored file of type %s.", type);
+            throw new StorageSystemException("Error while retrieving the stored file", e);
+        } catch (ParseException e) {
+            String errorMsg = String.format("Unable to parse metadata in JSON format for stored file with id : %s " +
+                    "and of type %s in tenant domain: %s", id, type, tenantDomain);
             throw new StorageSystemException(errorMsg, e);
         }
+    }
 
+    @Override
+    public boolean evaluateSecurity(String accessLevel, String id, String type, String tenantDomain,
+                                    String[] oauth2AllowedScopes) throws StorageSystemException {
+
+        File file;
+        try {
+            file = getMediaMetadataFile(id, type, tenantDomain);
+            if (file != null && file.exists()) {
+                return isFileAccessAllowed(file, accessLevel, oauth2AllowedScopes);
+            }
+            return false;
+        } catch (IOException e) {
+            String errorMsg = String.format("Error while retrieving metadata for stored file with id: %s and of type " +
+                    "%s in tenant domain: %s", id, type, tenantDomain);
+            throw new StorageSystemException(errorMsg, e);
+        } catch (ParseException e) {
+            String errorMsg = String.format("Unable to parse metadata in JSON format for stored file with id : %s " +
+                    "and of type %s in tenant domain: %s", id, type, tenantDomain);
+            throw new StorageSystemException(errorMsg, e);
+        }
     }
 
     @Override
@@ -234,21 +271,124 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
     }
 
-    private File getImageFile(String[] urlElements, String type, String tenantDomain) throws IOException {
+    private MediaFileDownloadData getMediaFile(String uuid, String tenantDomain, String type) throws
+            IOException, ParseException {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-        String imageCategoryType = getImageCategoryType(type);
-        Path fileStorageLocation = createStorageDirectory(imageCategoryType, tenantId, urlElements[0]);
-        if (fileStorageLocation != null) {
-            String fileName = urlElements[0];
-            Path filePath = fileStorageLocation.resolve(fileName).normalize();
-            FileTime createdTime = (FileTime) Files.getAttribute(filePath, "creationTime");
+        MediaFileDownloadData mediaFileDownloadData = new MediaFileDownloadData();
 
-            if (validate(urlElements, createdTime.toMillis())) {
-                return filePath.toFile();
+        Path fileStorageLocation = createStorageDirectory(type, tenantId, uuid);
+        if (fileStorageLocation != null) {
+            Path filePath = fileStorageLocation.resolve(uuid).normalize();
+            if (filePath.toFile().exists()) {
+                mediaFileDownloadData.setMediaFile(filePath.toFile());
+                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+                String metadataFileName = uuid + METADATA_FILE_SUFFIX + METADATA_FILE_EXTENSION;
+                Path metadataFilePath = fileStorageLocation.resolve(metadataFileName).normalize();
+                File metadataFile = metadataFilePath.toFile();
+                updateFileLastAccessedTime(metadataFile, String.valueOf(timestamp.getTime()));
+                mediaFileDownloadData.setResponseContentType(getResponseContentTypeFromMetadata(metadataFile));
+                return mediaFileDownloadData;
             }
         }
         return null;
+    }
+
+    private void updateFileLastAccessedTime(File metadataFile, String timeStamp) throws IOException, ParseException {
+
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(metadataFile),
+                StandardCharsets.UTF_8)) {
+            JSONParser parser = new JSONParser();
+            JSONObject metadata = (JSONObject) parser.parse(reader);
+            metadata.put(METADATA_FILE_LAST_ACCESSED_TIME, timeStamp);
+
+            try (FileOutputStream fileStream = new FileOutputStream(metadataFile);
+                 Writer writer = new OutputStreamWriter(fileStream, StandardCharsets.UTF_8)) {
+                writer.write(metadata.toJSONString());
+            }
+        }
+    }
+
+    private String getResponseContentTypeFromMetadata(File metadataFile) throws IOException, ParseException {
+
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(metadataFile),
+                StandardCharsets.UTF_8)) {
+            JSONParser parser = new JSONParser();
+            JSONObject metadata = (JSONObject) parser.parse(reader);
+            return (String) metadata.get(METADATA_FILE_CONTENT_TYPE);
+        }
+    }
+
+    private File getMediaMetadataFile(String id, String fileType, String tenantDomain) throws IOException {
+
+        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+        Path fileStorageLocation = createStorageDirectory(fileType, tenantId, id);
+        if (fileStorageLocation != null) {
+            String fileName = id + METADATA_FILE_SUFFIX + METADATA_FILE_EXTENSION;
+            Path filePath = fileStorageLocation.resolve(fileName).normalize();
+            return filePath.toFile();
+        }
+        return null;
+    }
+
+    private boolean isFileAccessAllowed(File file, String accessLevel, String[] oauth2AllowedScopes) throws
+            IOException, ParseException {
+
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+            JSONParser jsonParser = new JSONParser();
+            Object metadata = jsonParser.parse(reader);
+            HashMap fileSecurity = (HashMap) ((JSONObject) metadata).get(METADATA_FILE_SECURITY);
+            if (fileSecurity != null) {
+                if (FILE_ACCESS_LEVEL_PUBLIC.equals(accessLevel)) {
+                    return (Boolean) fileSecurity.get(FILE_SECURITY_ALLOWED_ALL);
+                } else if (FILE_ACCESS_LEVEL_ME.equals(accessLevel)) {
+                    return isUserAllowed(fileSecurity);
+                } else if (FILE_ACCESS_LEVEL_USER.equals(accessLevel)) {
+                    if (isUserAllowed(fileSecurity)) {
+                        return true;
+                    } else {
+                        return isScopeAllowed(fileSecurity, oauth2AllowedScopes);
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+    private boolean isUserAllowed(HashMap fileSecurity) {
+
+        ArrayList allowedUsers = (ArrayList) fileSecurity.get(FILE_SECURITY_ALLOWED_USERS);
+        if (allowedUsers != null) {
+            for (Object allowedUser : allowedUsers) {
+                if (allowedUser instanceof String) {
+                    String user = (String) allowedUser;
+                    if (user.equals(PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isScopeAllowed(HashMap fileSecurity, String[] oauth2AllowedScopes) {
+
+        ArrayList allowedScopes = (ArrayList) fileSecurity.get(FILE_SECURITY_ALLOWED_SCOPES);
+        if (allowedScopes != null) {
+            for (Object allowedScope : allowedScopes) {
+                if (allowedScope instanceof String) {
+                    String scope = (String) allowedScope;
+                    if (oauth2AllowedScopes != null) {
+                        for (String oauth2AllowedScope : oauth2AllowedScopes) {
+                            if (scope.equals(oauth2AllowedScope)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private String getImageCategoryType(String type) {

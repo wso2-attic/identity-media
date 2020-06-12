@@ -29,7 +29,10 @@ public interface StorageSystem {
     String addFile(List<InputStream> inputStreams, MediaMetadata mediaMetadata, String uuid, String tenantDomain)
             throws StorageSystemException;
 
-    DataContent getFile(String id, String type, String tenantDomain) throws StorageSystemException;
+    DataContent getFile(String id, String tenantDomain, String type) throws StorageSystemException;
+
+    boolean evaluateSecurity(String accessLevel, String id, String type, String tenantDomain,
+                             String[] oauth2AllowedScopes) throws StorageSystemException;
 
     void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException;
 

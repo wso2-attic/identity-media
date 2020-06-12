@@ -275,7 +275,6 @@
         <carbon.identity.framework.version>5.15.21</carbon.identity.framework.version>
         <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 6.0.0)
         </carbon.identity.framework.imp.pkg.version.range>
-        <org.apache.log4j.imp.pkg.version.range>[1.2,2)</org.apache.log4j.imp.pkg.version.range>
         <org.wso2.carbon.identity.media.file.imp.pkg.version.range>[1.0,2)
         </org.wso2.carbon.identity.media.file.imp.pkg.version.range>
         <json-simple.version>1.1.wso2v1</json-simple.version>
@@ -283,6 +282,7 @@
         <org.apache.commons.io.imp.pkg.version.range>[2.4,3)</org.apache.commons.io.imp.pkg.version.range>
         <org.apache.commons.codec.imp.pkg.version.range>[1.4,2)</org.apache.commons.codec.imp.pkg.version.range>
         <org.apache.commons.lang.imp.pkg.version.range>[2.6,3)</org.apache.commons.lang.imp.pkg.version.range>
+        <org.apache.commons.logging.imp.pkg.version.range>[1.2,2)</org.apache.commons.logging.imp.pkg.version.range>
         <org.apache.commons.collections.imp.pkg.version.range>[3.2.0,4.0.0)</org.apache.commons.collections.imp.pkg.version.range>
         <commons-codec.version>1.4.0.wso2v1</commons-codec.version>
         <carbon.p2.plugin.version>1.5.3</carbon.p2.plugin.version>

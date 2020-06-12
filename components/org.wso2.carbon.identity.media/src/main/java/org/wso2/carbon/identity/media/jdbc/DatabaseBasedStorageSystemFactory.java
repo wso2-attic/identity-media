@@ -23,7 +23,7 @@ import org.wso2.carbon.identity.media.StorageSystemFactory;
  */
 public class DatabaseBasedStorageSystemFactory extends StorageSystemFactory {
 
-    public static final String JDBC = "org.wso2.carbon.identity.image.jdbc.DatabaseBasedStorageSystemImpl";
+    public static final String JDBC = "org.wso2.carbon.identity.media.jdbc.DatabaseBasedStorageSystemImpl";
 
     @Override
     public StorageSystem getInstance() {

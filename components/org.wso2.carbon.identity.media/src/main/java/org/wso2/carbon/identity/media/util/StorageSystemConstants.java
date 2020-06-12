@@ -33,14 +33,17 @@ public class StorageSystemConstants {
     public static final String FILE_CREATION_TIME_ATTRIBUTE = "creationTime";
     public static final String METADATA_FILE_SUFFIX = "_meta";
     public static final String METADATA_FILE_EXTENSION = ".json";
-    public static final String METADATA_FILE_NAME = "fileName";
-    public static final String METADATA_FILE_CONTENT_TYPE = "fileContentType";
-    public static final String METADATA_FILE_TAG = "fileTag";
-    public static final String METADATA_FILE_CREATED_TIME = "fileCreatedTime";
-    public static final String METADATA_FILE_LAST_ACCESSED_TIME = "fileLastAccessedTime";
-    public static final String METADATA_FILE_SECURITY = "fileSecurity";
+    public static final String METADATA_FILE_NAME = "name";
+    public static final String METADATA_FILE_CONTENT_TYPE = "contentType";
+    public static final String METADATA_FILE_TAG = "tag";
+    public static final String METADATA_FILE_CREATED_TIME = "createdTime";
+    public static final String METADATA_FILE_LAST_ACCESSED_TIME = "lastAccessedTime";
+    public static final String METADATA_FILE_SECURITY = "security";
     public static final String FILE_SECURITY_ALLOWED_ALL = "allowedAll";
     public static final String FILE_SECURITY_ALLOWED_USERS = "allowedUsers";
     public static final String FILE_SECURITY_ALLOWED_SCOPES = "allowedScopes";
+    public static final String FILE_ACCESS_LEVEL_ME = "me";
+    public static final String FILE_ACCESS_LEVEL_USER = "user";
+    public static final String FILE_ACCESS_LEVEL_PUBLIC = "public";
 
 }

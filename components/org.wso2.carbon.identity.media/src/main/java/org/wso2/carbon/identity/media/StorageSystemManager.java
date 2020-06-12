@@ -66,26 +66,53 @@ public class StorageSystemManager {
     /**
      * Method which retrieves stored contents.
      *
-     * @param id           unique id related to the requesting resource. (This id consists of uuid, a unique hash value
-     *                     and a timestamp.)
-     * @param type         Type of image (could be i,a, or u) i stands for idp,a stands for app, u stands for user
-     * @param tenantDomain tenantdomain of the service call.
-     * @return inputstream of the file.
-     * @throws StorageSystemException Exception related to retrieving the image
+     * @param id           The unique id related to the requesting resource.
+     * @param tenantDomain The tenant domain of the service call.
+     * @param type         The high level content-type of the resource (if media content-type is image/png then
+     *                     type would be image).
+     * @return requested file.
+     * @throws StorageSystemException Exception related to retrieving the media.
      */
-    public DataContent readContent(String id, String type, String tenantDomain) throws StorageSystemException {
+    public DataContent readContent(String id, String tenantDomain, String type) throws StorageSystemException {
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("Download media for tenant domain %s.", tenantDomain));
+        }
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        if (storageSystemFactory != null) {
+            return storageSystemFactory.getInstance().getFile(id, tenantDomain, type);
+        }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("StorageSystemFactory object is null hence returning null.");
+        }
+        return null;
+    }
+
+    /**
+     * @param accessLevel         The access level of the media (can be user, me or public).
+     * @param id                  The unique id related to the requesting resource.
+     * @param type                The high level content-type of the resource (if media content-type is image/png then
+     *                            type would be image).
+     * @param tenantDomain        The tenant domain of the service call.
+     * @param oauth2AllowedScopes The token scopes.
+     * @return true if access to the resource is permitted.
+     * @throws StorageSystemException Exception related to security evaluation during file download.
+     */
+    public boolean evaluateSecurity(String accessLevel, String id, String type, String tenantDomain,
+                                    String[] oauth2AllowedScopes) throws StorageSystemException {
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.format("Download image for category %s and tenant domain %s.", type, tenantDomain));
         }
         StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
         if (storageSystemFactory != null) {
-            return storageSystemFactory.getInstance().getFile(id, type, tenantDomain);
+            return storageSystemFactory.getInstance().evaluateSecurity(accessLevel, id, type, tenantDomain,
+                    oauth2AllowedScopes);
         }
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("StorageSystemFactory object is null hence returning null.");
         }
-        return null;
+        return false;
     }
 
     /**

@@ -110,7 +110,6 @@
                         <Import-Package>
                             org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
                             org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
-                            org.apache.log4j;version="${org.apache.log4j.imp.pkg.version.range}",
                             org.wso2.carbon.identity.media.file;version="${org.wso2.carbon.identity.media.file.imp.pkg.version.range}",
                             org.wso2.carbon.identity.media.jdbc;version="${org.wso2.carbon.identity.media.file.imp.pkg.version.range}",
                             org.wso2.carbon.identity.media.exception;version="${org.wso2.carbon.identity.media.file.imp.pkg.version.range}",
@@ -122,8 +121,10 @@
                             org.wso2.carbon.identity.core.*;version="${carbon.identity.framework.imp.pkg.version.range}",
                             org.apache.commons.codec.digest;version="${org.apache.commons.codec.imp.pkg.version.range}",
                             org.apache.commons.lang;version="${org.apache.commons.lang.imp.pkg.version.range}",
+                            org.apache.commons.logging;version="${org.apache.commons.logging.imp.pkg.version.range}",
                             org.apache.commons.collections;version="${org.apache.commons.collections.imp.pkg.version.range}",
-                            org.json.simple
+                            org.json.simple,
+                            org.json.simple.parser
                         </Import-Package>
                     </instructions>
                 </configuration>

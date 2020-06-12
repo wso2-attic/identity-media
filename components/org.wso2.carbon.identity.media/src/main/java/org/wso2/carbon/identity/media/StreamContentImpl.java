@@ -26,15 +26,28 @@ import java.io.InputStream;
 public class StreamContentImpl implements StreamContent {
 
     private InputStream inputStream;
+    private String responseContentType;
 
     public StreamContentImpl(InputStream inputStream) {
 
         this.inputStream = inputStream;
     }
 
+    public StreamContentImpl(InputStream inputStream, String responseContentType) {
+
+        this.inputStream = inputStream;
+        this.responseContentType = responseContentType;
+    }
+
     @Override
     public InputStream getInputStream() {
 
         return inputStream;
+    }
+
+    @Override
+    public String getResponseContentType() {
+
+        return responseContentType;
     }
 }

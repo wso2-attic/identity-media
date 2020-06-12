@@ -18,7 +18,7 @@
 
 package org.wso2.carbon.identity.media.model;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class represents metadata associated with the uploaded media file.
@@ -28,7 +28,7 @@ public class MediaMetadata {
     private String fileName;
     private String fileTag;
     private String fileContentType;
-    private ArrayList<String> fileIdentifiers;
+    private List<String> fileIdentifiers;
     private FileSecurity fileSecurity;
 
     public String getFileTag() {
@@ -61,12 +61,12 @@ public class MediaMetadata {
         this.fileName = fileName;
     }
 
-    public ArrayList<String> getFileIdentifiers() {
+    public List<String> getFileIdentifiers() {
 
         return fileIdentifiers;
     }
 
-    public void setFileIdentifiers(ArrayList<String> fileIdentifiers) {
+    public void setFileIdentifiers(List<String> fileIdentifiers) {
 
         this.fileIdentifiers = fileIdentifiers;
     }

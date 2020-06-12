@@ -23,14 +23,17 @@ package org.wso2.carbon.identity.media.exception;
 public class StorageSystemException extends Exception {
 
     public StorageSystemException() {
+
         super();
     }
 
     public StorageSystemException(String message) {
+
         super(message);
     }
 
     public StorageSystemException(String message, Throwable cause) {
+
         super(message, cause);
     }
 }

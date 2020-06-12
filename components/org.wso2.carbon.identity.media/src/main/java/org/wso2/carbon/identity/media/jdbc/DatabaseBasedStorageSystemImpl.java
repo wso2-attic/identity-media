@@ -36,9 +36,16 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public DataContent getFile(String id, String type, String tenantDomain) throws StorageSystemException {
+    public DataContent getFile(String id, String tenantDomain, String type) throws StorageSystemException {
 
         throw new UnsupportedOperationException("Database based get file operation not supported.");
+    }
+
+    @Override
+    public boolean evaluateSecurity(String accessLevel, String id, String type, String tenantDomain,
+                                    String[] oauth2AllowedScopes) throws StorageSystemException {
+
+        throw new UnsupportedOperationException("Database based security evaluation not supported.");
     }
 
     @Override

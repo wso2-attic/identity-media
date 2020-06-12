@@ -26,15 +26,28 @@ import java.io.File;
 public class FileContentImpl implements FileContent {
 
     private File file;
+    private String responseContentType;
 
     public FileContentImpl(File file) {
 
         this.file = file;
     }
 
+    public FileContentImpl(File file, String responseContentType) {
+
+        this.file = file;
+        this.responseContentType = responseContentType;
+    }
+
     @Override
     public File getFile() {
 
         return file;
+    }
+
+    @Override
+    public String getResponseContentType() {
+
+        return responseContentType;
     }
 }

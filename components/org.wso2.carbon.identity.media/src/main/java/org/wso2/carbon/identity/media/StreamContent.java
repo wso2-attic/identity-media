@@ -33,4 +33,6 @@ public interface StreamContent extends DataContent {
      * @return
      */
     InputStream getInputStream();
+
+    String getResponseContentType();
 }

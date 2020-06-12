@@ -32,4 +32,6 @@ public interface FileContent extends DataContent {
      * @return
      */
     File getFile();
+
+    String getResponseContentType();
 }
