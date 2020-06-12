@@ -13,61 +13,80 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wso2.carbon.identity.image.file;
+package org.wso2.carbon.identity.media.file;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.simple.JSONObject;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.image.DataContent;
-import org.wso2.carbon.identity.image.FileContentImpl;
-import org.wso2.carbon.identity.image.StorageSystem;
-import org.wso2.carbon.identity.image.exception.StorageSystemException;
-import org.wso2.carbon.identity.image.util.StorageSystemUtil;
+import org.wso2.carbon.identity.media.DataContent;
+import org.wso2.carbon.identity.media.FileContentImpl;
+import org.wso2.carbon.identity.media.StorageSystem;
+import org.wso2.carbon.identity.media.exception.StorageSystemException;
+import org.wso2.carbon.identity.media.model.FileSecurity;
+import org.wso2.carbon.identity.media.model.MediaMetadata;
+import org.wso2.carbon.identity.media.util.StorageSystemUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.util.List;
 
-import static org.wso2.carbon.identity.image.util.StorageSystemConstants.CONFIGURABLE_UPLOAD_LOCATION;
-import static org.wso2.carbon.identity.image.util.StorageSystemConstants.DEFAULT;
-import static org.wso2.carbon.identity.image.util.StorageSystemConstants.FILE_CREATION_TIME_ATTRIBUTE;
-import static org.wso2.carbon.identity.image.util.StorageSystemConstants.IDP;
-import static org.wso2.carbon.identity.image.util.StorageSystemConstants.ID_SEPERATOR;
-import static org.wso2.carbon.identity.image.util.StorageSystemConstants.IMAGE_STORE;
-import static org.wso2.carbon.identity.image.util.StorageSystemConstants.SP;
-import static org.wso2.carbon.identity.image.util.StorageSystemConstants.SYSTEM_PROPERTY_CARBON_HOME;
-import static org.wso2.carbon.identity.image.util.StorageSystemConstants.USER;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.CONFIGURABLE_UPLOAD_LOCATION;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.DEFAULT;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_CREATION_TIME_ATTRIBUTE;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_SECURITY_ALLOWED_ALL;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_SECURITY_ALLOWED_SCOPES;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_SECURITY_ALLOWED_USERS;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.IDP;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.ID_SEPERATOR;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.MEDIA_STORE;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_CONTENT_TYPE;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_CREATED_TIME;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_EXTENSION;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_LAST_ACCESSED_TIME;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_NAME;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_SECURITY;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_SUFFIX;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_TAG;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.SP;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.SYSTEM_PROPERTY_CARBON_HOME;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.USER;
 
 /**
- * This is the implementation class to store images in to local file system.
+ * This is the implementation class to store, retrieve and delete media in the local file system.
  */
 public class FileBasedStorageSystemImpl implements StorageSystem {
 
     private static final Log LOGGER = LogFactory.getLog(FileBasedStorageSystemFactory.class);
 
     @Override
-    public String addFile(InputStream inputStream, String type, String uuid, String tenantDomain)
-            throws StorageSystemException {
+    public String addFile(List<InputStream> inputStreams, MediaMetadata mediaMetadata, String uuid,
+                          String tenantDomain) throws StorageSystemException {
 
         try {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(
-                        String.format("Uploading image file of type %s, unique id of %s and in tenant domain %s", type,
-                                uuid, tenantDomain));
+                LOGGER.debug(String.format("Uploading media file with unique id: %s and in tenant domain: %s", uuid,
+                        tenantDomain));
             }
-            return uploadImageUsingChannels(inputStream, type, uuid, tenantDomain);
+            return uploadMediaUsingChannels(inputStreams, mediaMetadata, uuid, tenantDomain);
         } catch (IOException e) {
-            String errorMsg = String.format("Error while uploading image to file system for %s type.", type);
-            throw new StorageSystemException(errorMsg, e);
+            throw new StorageSystemException("Error while uploading media to file system.", e);
         }
 
     }
@@ -107,81 +126,71 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         return inputStream;
     }
 
-    private String uploadImageUsingChannels(InputStream fileInputStream, String type, String uuid, String tenantDomain)
-            throws IOException {
+    private String uploadMediaUsingChannels(List<InputStream> fileInputStreams, MediaMetadata mediaMetadata,
+                                            String uuid, String tenantDomain) throws IOException {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-        Path imagesPath = createStorageDirectory(type, tenantId, uuid);
+        String fileContentType = mediaMetadata.getFileContentType();
+        String fileType = fileContentType.split("/")[0];
+        String fileTag = mediaMetadata.getFileTag();
+        String fileName = mediaMetadata.getFileName();
+        FileSecurity fileSecurity = mediaMetadata.getFileSecurity();
+
+        Path mediaStoragePath = createStorageDirectory(fileType, tenantId, uuid);
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(String.format("Uploading image file to directory %s, for tenant id %d", imagesPath.toString(),
-                    tenantId));
+            LOGGER.debug(String.format("Uploading media file to directory %s, for tenant id %d",
+                    mediaStoragePath.toString(), tenantId));
         }
-        if (imagesPath != null) {
-            Path targetLocation = imagesPath.resolve(uuid);
-            try (FileOutputStream fileOutputStream = new FileOutputStream(targetLocation.toFile());
-                    FileChannel fileChannel = fileOutputStream.getChannel();
-                    ReadableByteChannel readableByteChannel = Channels.newChannel(fileInputStream)) {
+        if (mediaStoragePath != null) {
+            Path targetLocation = mediaStoragePath.resolve(uuid);
+            File file = targetLocation.toFile();
+            // Currently, only single file upload is allowed.
+            try (FileOutputStream fileOutputStream = new FileOutputStream(file);
+                 FileChannel fileChannel = fileOutputStream.getChannel();
+                 ReadableByteChannel readableByteChannel = Channels.newChannel(fileInputStreams.get(0))) {
                 fileChannel.transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
                 if (LOGGER.isDebugEnabled()) {
-                    byte[] imageByteCount = IOUtils.toByteArray(fileInputStream);
-                    LOGGER.debug(String.format("Writing image data of size %d to a file named %s at location %s.",
+                    byte[] imageByteCount = IOUtils.toByteArray(fileInputStreams.get(0));
+                    LOGGER.debug(String.format("Writing media data of size %d to a file named %s at location %s.",
                             imageByteCount.length, uuid, targetLocation.toString()));
                 }
             }
 
             FileTime createdTime = (FileTime) Files.getAttribute(targetLocation, FILE_CREATION_TIME_ATTRIBUTE);
             String timeStampAsString = Long.toString(createdTime.toMillis());
-            String uuidHash = StorageSystemUtil.calculateUUIDHash(uuid, timeStampAsString);
+            storeMediaMetadata(targetLocation, fileName, fileContentType, fileTag, fileSecurity, timeStampAsString);
 
-            return uuid + ID_SEPERATOR + uuidHash + ID_SEPERATOR + timeStampAsString;
+            return uuid;
         }
         // TODO: 11/29/19 Add proper warnings for e.g Disk Full /File permission scenarios.
 
         return "";
     }
 
-    private Path createStorageDirectory(String type, int tenantId, String uuid) throws IOException {
+    private Path createStorageDirectory(String fileType, int tenantId, String uuid) throws IOException {
 
         Path fileStorageLocation = null;
         Path configurableRootFolder = null;
         String systemPropertyForRootFolder = System.getProperty(CONFIGURABLE_UPLOAD_LOCATION);
         if (systemPropertyForRootFolder != null) {
             configurableRootFolder = Paths.get(systemPropertyForRootFolder);
-
         }
+
         if (configurableRootFolder == null) {
             configurableRootFolder = Paths.get(System.getProperty(SYSTEM_PROPERTY_CARBON_HOME));
         }
 
         if (configurableRootFolder != null) {
-            fileStorageLocation = configurableRootFolder.resolve(Paths.get(IMAGE_STORE));
+            fileStorageLocation = configurableRootFolder.resolve(Paths.get(MEDIA_STORE + fileType));
         }
 
-        Path imagesPath = null;
+        Path mediaPath = null;
 
         if (fileStorageLocation != null) {
-            switch (type) {
-            case IDP:
-                imagesPath = Files
-                        .createDirectories(fileStorageLocation.resolve(IDP).resolve(String.valueOf(tenantId)));
-                break;
-
-            case SP:
-                imagesPath = Files.createDirectories(fileStorageLocation.resolve(SP).resolve(String.valueOf(tenantId)));
-                break;
-
-            case USER:
-                imagesPath = Files
-                        .createDirectories(fileStorageLocation.resolve(USER).resolve(String.valueOf(tenantId)));
-                break;
-
-            default:
-                imagesPath = Files
-                        .createDirectories(fileStorageLocation.resolve(DEFAULT).resolve(String.valueOf(tenantId)));
-            }
+            mediaPath = Files.createDirectories(fileStorageLocation.resolve(String.valueOf(tenantId)));
         }
 
-        return createUniqueDirectoryStructure(imagesPath, uuid);
+        return createUniqueDirectoryStructure(mediaPath, uuid);
 
     }
 
@@ -273,7 +282,69 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
                 Files.deleteIfExists(filePath);
             }
         }
+    }
 
+    private void storeMediaMetadata(Path targetLocation, String fileName, String fileContentType, String fileTag,
+                                    FileSecurity fileSecurity, String timestamp) throws IOException {
+
+        Path metadataTargetLocation = targetLocation.resolveSibling(targetLocation.getFileName() + METADATA_FILE_SUFFIX
+                + METADATA_FILE_EXTENSION);
+
+        JSONObject metadata = new JSONObject();
+
+        if (StringUtils.isNotBlank(fileName)) {
+            metadata.put(METADATA_FILE_NAME, fileName);
+        }
+        if (StringUtils.isNotBlank(fileContentType)) {
+            metadata.put(METADATA_FILE_CONTENT_TYPE, fileContentType);
+        }
+        if (StringUtils.isNotBlank(fileTag)) {
+            metadata.put(METADATA_FILE_TAG, fileTag);
+        }
+        storeFileSecurityMetadata(fileSecurity, metadata);
+        metadata.put(METADATA_FILE_CREATED_TIME, timestamp);
+        metadata.put(METADATA_FILE_LAST_ACCESSED_TIME, timestamp);
+
+        try (FileOutputStream fileStream = new FileOutputStream(metadataTargetLocation.toFile());
+             Writer writer = new OutputStreamWriter(fileStream, StandardCharsets.UTF_8)) {
+            writer.write(metadata.toJSONString());
+        }
+    }
+
+    private void storeFileSecurityMetadata(FileSecurity fileSecurity, JSONObject metadata) {
+
+        JSONObject fileSecurityJSON = new JSONObject();
+
+        if (fileSecurity == null) {
+            fileSecurityJSON.put(FILE_SECURITY_ALLOWED_ALL, false);
+            fileSecurityJSON.put(FILE_SECURITY_ALLOWED_USERS,
+                    PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername());
+        } else {
+            boolean allowedAll = fileSecurity.isAllowedAll();
+            fileSecurityJSON.put(FILE_SECURITY_ALLOWED_ALL, allowedAll);
+
+            // Set allowed users and scopes that are required to access protected media.
+            if (!allowedAll) {
+                List<String> allowedUsers = fileSecurity.getAllowedUsers();
+                List<String> allowedScopes = fileSecurity.getAllowedScopes();
+
+                /* Set access level permissions only to the user uploading the media if no allowed users or scopes are
+                present in the request. */
+                if (CollectionUtils.isEmpty(allowedUsers) && CollectionUtils.isEmpty(allowedScopes)) {
+                    fileSecurityJSON.put(FILE_SECURITY_ALLOWED_USERS, PrivilegedCarbonContext
+                            .getThreadLocalCarbonContext().getUsername());
+                } else {
+                    if (CollectionUtils.isNotEmpty(allowedUsers)) {
+                        fileSecurityJSON.put(FILE_SECURITY_ALLOWED_USERS, allowedUsers);
+                    }
+                    if (CollectionUtils.isNotEmpty(allowedScopes)) {
+                        fileSecurityJSON.put(FILE_SECURITY_ALLOWED_SCOPES, allowedScopes);
+                    }
+                }
+            }
+        }
+
+        metadata.put(METADATA_FILE_SECURITY, fileSecurityJSON);
     }
 
 }
