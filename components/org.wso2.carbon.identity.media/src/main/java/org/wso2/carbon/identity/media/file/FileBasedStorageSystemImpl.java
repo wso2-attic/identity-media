@@ -32,7 +32,6 @@ import org.wso2.carbon.identity.media.exception.StorageSystemException;
 import org.wso2.carbon.identity.media.model.FileSecurity;
 import org.wso2.carbon.identity.media.model.MediaFileDownloadData;
 import org.wso2.carbon.identity.media.model.MediaMetadata;
-import org.wso2.carbon.identity.media.util.StorageSystemUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -56,7 +55,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.CONFIGURABLE_UPLOAD_LOCATION;
-import static org.wso2.carbon.identity.media.util.StorageSystemConstants.DEFAULT;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_ACCESS_LEVEL_ME;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_ACCESS_LEVEL_PUBLIC;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_ACCESS_LEVEL_USER;
@@ -64,8 +62,6 @@ import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_CR
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_SECURITY_ALLOWED_ALL;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_SECURITY_ALLOWED_SCOPES;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_SECURITY_ALLOWED_USERS;
-import static org.wso2.carbon.identity.media.util.StorageSystemConstants.IDP;
-import static org.wso2.carbon.identity.media.util.StorageSystemConstants.ID_SEPERATOR;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.MEDIA_STORE;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_CONTENT_TYPE;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_CREATED_TIME;
@@ -75,9 +71,7 @@ import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADAT
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_SECURITY;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_SUFFIX;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_TAG;
-import static org.wso2.carbon.identity.media.util.StorageSystemConstants.SP;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.SYSTEM_PROPERTY_CARBON_HOME;
-import static org.wso2.carbon.identity.media.util.StorageSystemConstants.USER;
 
 /**
  * This is the implementation class to store, retrieve and delete media in the local file system.
@@ -147,9 +141,8 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     @Override
     public void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException {
 
-        String[] urlElements = retrieveImageUniqueIdElements(id);
         try {
-            deleteImageFile(urlElements, type, tenantDomain);
+            deleteMediaFile(id, type, tenantDomain);
         } catch (IOException e) {
             String errorMsg = String.format("Error while deleting the stored file of type %s.", type);
             throw new StorageSystemException(errorMsg, e);
@@ -174,11 +167,12 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         FileSecurity fileSecurity = mediaMetadata.getFileSecurity();
 
         Path mediaStoragePath = createStorageDirectory(fileType, tenantId, uuid);
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(String.format("Uploading media file to directory %s, for tenant id %d",
-                    mediaStoragePath.toString(), tenantId));
-        }
+
         if (mediaStoragePath != null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("Uploading media file to directory %s, for tenant id %d",
+                        mediaStoragePath.toString(), tenantId));
+            }
             Path targetLocation = mediaStoragePath.resolve(uuid);
             File file = targetLocation.toFile();
             // Currently, only single file upload is allowed.
@@ -206,21 +200,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
     private Path createStorageDirectory(String fileType, int tenantId, String uuid) throws IOException {
 
-        Path fileStorageLocation = null;
-        Path configurableRootFolder = null;
-        String systemPropertyForRootFolder = System.getProperty(CONFIGURABLE_UPLOAD_LOCATION);
-        if (systemPropertyForRootFolder != null) {
-            configurableRootFolder = Paths.get(systemPropertyForRootFolder);
-        }
-
-        if (configurableRootFolder == null) {
-            configurableRootFolder = Paths.get(System.getProperty(SYSTEM_PROPERTY_CARBON_HOME));
-        }
-
-        if (configurableRootFolder != null) {
-            fileStorageLocation = configurableRootFolder.resolve(Paths.get(MEDIA_STORE + fileType));
-        }
-
+        Path fileStorageLocation = getFileStorageLocation(fileType);
         Path mediaPath = null;
 
         if (fileStorageLocation != null) {
@@ -228,7 +208,6 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         }
 
         return createUniqueDirectoryStructure(mediaPath, uuid);
-
     }
 
     private Path createUniqueDirectoryStructure(Path path, String uuid) throws IOException {
@@ -243,32 +222,6 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             return Files.createDirectories(uniquePath);
         }
         return null;
-
-    }
-
-    /**
-     * The GET url will be in the format of https://localhost:9443/t/carbon
-     * .super/api/server/v1/images/{type}/uuid_unique-hash_timestamp.
-     * This method will return the uuid,unique-hash and timestamp in an array after splitting using the seperator
-     * (underscore)
-     *
-     * @param id url fragment defining the unique id of the resource
-     * @return String array containing uuid,unique-hash and timestamp
-     */
-    private String[] retrieveImageUniqueIdElements(String id) {
-
-        if (id == null) {
-            return new String[0];
-        }
-        return id.split(ID_SEPERATOR);
-
-    }
-
-    private boolean validate(String[] urlElements, long createdTime) {
-
-        return urlElements[2].equals(Long.toString(createdTime)) && urlElements[1]
-                .equals(StorageSystemUtil.calculateUUIDHash(urlElements[0], urlElements[2]));
-
     }
 
     private MediaFileDownloadData getMediaFile(String uuid, String tenantDomain, String type) throws
@@ -277,7 +230,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         MediaFileDownloadData mediaFileDownloadData = new MediaFileDownloadData();
 
-        Path fileStorageLocation = createStorageDirectory(type, tenantId, uuid);
+        Path fileStorageLocation = getStorageDirectory(type, tenantId, uuid);
         if (fileStorageLocation != null) {
             Path filePath = fileStorageLocation.resolve(uuid).normalize();
             if (filePath.toFile().exists()) {
@@ -285,9 +238,11 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
                 Timestamp timestamp = new Timestamp(System.currentTimeMillis());
                 String metadataFileName = uuid + METADATA_FILE_SUFFIX + METADATA_FILE_EXTENSION;
                 Path metadataFilePath = fileStorageLocation.resolve(metadataFileName).normalize();
-                File metadataFile = metadataFilePath.toFile();
-                updateFileLastAccessedTime(metadataFile, String.valueOf(timestamp.getTime()));
-                mediaFileDownloadData.setResponseContentType(getResponseContentTypeFromMetadata(metadataFile));
+                if (metadataFilePath.toFile().exists()) {
+                    File metadataFile = metadataFilePath.toFile();
+                    updateFileLastAccessedTime(metadataFile, String.valueOf(timestamp.getTime()));
+                    mediaFileDownloadData.setResponseContentType(getResponseContentTypeFromMetadata(metadataFile));
+                }
                 return mediaFileDownloadData;
             }
         }
@@ -319,13 +274,13 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         }
     }
 
-    private File getMediaMetadataFile(String id, String fileType, String tenantDomain) throws IOException {
+    private File getMediaMetadataFile(String uuid, String mediaType, String tenantDomain) throws IOException {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-        Path fileStorageLocation = createStorageDirectory(fileType, tenantId, id);
+        Path fileStorageLocation = getStorageDirectory(mediaType, tenantId, uuid);
         if (fileStorageLocation != null) {
-            String fileName = id + METADATA_FILE_SUFFIX + METADATA_FILE_EXTENSION;
-            Path filePath = fileStorageLocation.resolve(fileName).normalize();
+            String metadataFileName = uuid + METADATA_FILE_SUFFIX + METADATA_FILE_EXTENSION;
+            Path filePath = fileStorageLocation.resolve(metadataFileName).normalize();
             return filePath.toFile();
         }
         return null;
@@ -391,39 +346,6 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         return false;
     }
 
-    private String getImageCategoryType(String type) {
-
-        switch (type) {
-        case "i":
-            return IDP;
-
-        case "a":
-            return SP;
-
-        case "u":
-            return USER;
-
-        default:
-            return DEFAULT;
-        }
-    }
-
-    private void deleteImageFile(String[] urlElements, String type, String tenantDomain) throws IOException {
-
-        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-        String imageCategoryType = getImageCategoryType(type);
-        Path fileStorageLocation = createStorageDirectory(imageCategoryType, tenantId, urlElements[0]);
-        if (fileStorageLocation != null) {
-            String fileName = urlElements[0];
-            Path filePath = fileStorageLocation.resolve(fileName).normalize();
-            FileTime createdTime = (FileTime) Files.getAttribute(filePath, "creationTime");
-
-            if (validate(urlElements, createdTime.toMillis())) {
-                Files.deleteIfExists(filePath);
-            }
-        }
-    }
-
     private void storeMediaMetadata(Path targetLocation, String fileName, String fileContentType, String fileTag,
                                     FileSecurity fileSecurity, String timestamp) throws IOException {
 
@@ -485,6 +407,71 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         }
 
         metadata.put(METADATA_FILE_SECURITY, fileSecurityJSON);
+    }
+
+    private void deleteMediaFile(String id, String type, String tenantDomain) throws IOException {
+
+        int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+
+        Path fileStorageLocation = getStorageDirectory(type, tenantId, id);
+        if (fileStorageLocation != null) {
+            Path filePath = fileStorageLocation.resolve(id).normalize();
+            String metadataFileName = id + METADATA_FILE_SUFFIX + METADATA_FILE_EXTENSION;
+            Path metadataFilePath = fileStorageLocation.resolve(metadataFileName).normalize();
+            Files.deleteIfExists(filePath);
+            Files.deleteIfExists(metadataFilePath);
+        }
+    }
+
+    private Path getStorageDirectory(String fileType, int tenantId, String id) {
+
+        Path fileStorageLocation = getFileStorageLocation(fileType);
+        Path mediaPath = null;
+        if (fileStorageLocation != null) {
+            if (Files.notExists(fileStorageLocation)) {
+                return null;
+            }
+            mediaPath = fileStorageLocation.resolve(String.valueOf(tenantId));
+            if (Files.notExists(mediaPath)) {
+                return null;
+            }
+        }
+        return getUniqueDirectoryStructure(mediaPath, id);
+    }
+
+    private Path getFileStorageLocation(String fileType) {
+
+        Path fileStorageLocation = null;
+        Path configurableRootFolder = null;
+        String systemPropertyForRootFolder = System.getProperty(CONFIGURABLE_UPLOAD_LOCATION);
+        if (systemPropertyForRootFolder != null) {
+            configurableRootFolder = Paths.get(systemPropertyForRootFolder);
+        }
+
+        if (configurableRootFolder == null) {
+            configurableRootFolder = Paths.get(System.getProperty(SYSTEM_PROPERTY_CARBON_HOME));
+        }
+
+        if (configurableRootFolder != null) {
+            fileStorageLocation = configurableRootFolder.resolve(Paths.get(MEDIA_STORE + fileType));
+        }
+        return fileStorageLocation;
+    }
+
+    private Path getUniqueDirectoryStructure(Path path, String uuid) {
+
+        String[] uuidSplit = uuid.split("-");
+        Path uniquePath;
+        if (path != null) {
+            uniquePath = path;
+            for (int i = 1; i <= uuidSplit.length; i++) {
+                uniquePath = uniquePath.resolve(uuidSplit[uuidSplit.length - i]);
+            }
+            if (Files.exists(uniquePath)) {
+                return uniquePath;
+            }
+        }
+        return null;
     }
 
 }

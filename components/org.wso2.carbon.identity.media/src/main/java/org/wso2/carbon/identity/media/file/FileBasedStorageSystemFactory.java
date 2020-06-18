@@ -23,7 +23,7 @@ import org.wso2.carbon.identity.media.StorageSystemFactory;
  */
 public class FileBasedStorageSystemFactory extends StorageSystemFactory {
 
-    public static final String FILE = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
+    private static final String FILE = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
 
     @Override
     public StorageSystem getInstance() {
