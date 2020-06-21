@@ -182,9 +182,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         boolean allowedAll = false;
         ArrayList<String> allowedUsers = new ArrayList<>();
         allowedUsers.add("user1");
-        List<String> allowedScopes = new ArrayList<>();
-        allowedScopes.add("scope1");
-        FileSecurity fileSecurity = new FileSecurity(allowedAll, allowedUsers, allowedScopes);
+        FileSecurity fileSecurity = new FileSecurity(allowedAll, allowedUsers);
         mediaMetadata.setFileSecurity(fileSecurity);
 
         mockStatic(IdentityTenantUtil.class);

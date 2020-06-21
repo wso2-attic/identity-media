@@ -68,6 +68,7 @@ import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADAT
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_EXTENSION;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_LAST_ACCESSED_TIME;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_NAME;
+import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_RESOURCE_OWNER;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_SECURITY;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_SUFFIX;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_TAG;
@@ -81,8 +82,8 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     private static final Log LOGGER = LogFactory.getLog(FileBasedStorageSystemImpl.class);
 
     @Override
-    public String addFile(List<InputStream> inputStreams, MediaMetadata mediaMetadata, String uuid,
-                          String tenantDomain) throws StorageSystemException {
+    public String addMedia(List<InputStream> inputStreams, MediaMetadata mediaMetadata, String uuid,
+                           String tenantDomain) throws StorageSystemException {
 
         try {
             if (LOGGER.isDebugEnabled()) {
@@ -164,6 +165,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         String fileType = fileContentType.split("/")[0];
         String fileTag = mediaMetadata.getFileTag();
         String fileName = mediaMetadata.getFileName();
+        String resourceOwner = mediaMetadata.getResourceOwner();
         FileSecurity fileSecurity = mediaMetadata.getFileSecurity();
 
         Path mediaStoragePath = createStorageDirectory(fileType, tenantId, uuid);
@@ -189,7 +191,8 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
             FileTime createdTime = (FileTime) Files.getAttribute(targetLocation, FILE_CREATION_TIME_ATTRIBUTE);
             String timeStampAsString = Long.toString(createdTime.toMillis());
-            storeMediaMetadata(targetLocation, fileName, fileContentType, fileTag, fileSecurity, timeStampAsString);
+            storeMediaMetadata(targetLocation, fileName, fileContentType, fileTag, resourceOwner, fileSecurity,
+                    timeStampAsString);
 
             return uuid;
         }
@@ -347,7 +350,8 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     private void storeMediaMetadata(Path targetLocation, String fileName, String fileContentType, String fileTag,
-                                    FileSecurity fileSecurity, String timestamp) throws IOException {
+                                    String resourceOwner, FileSecurity fileSecurity, String timestamp)
+            throws IOException {
 
         Path metadataTargetLocation = targetLocation.resolveSibling(targetLocation.getFileName() + METADATA_FILE_SUFFIX
                 + METADATA_FILE_EXTENSION);
@@ -363,6 +367,9 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         if (StringUtils.isNotBlank(fileTag)) {
             metadata.put(METADATA_FILE_TAG, fileTag);
         }
+        if (StringUtils.isNotBlank(resourceOwner)) {
+            metadata.put(METADATA_FILE_RESOURCE_OWNER, resourceOwner);
+        }
         storeFileSecurityMetadata(fileSecurity, metadata);
         metadata.put(METADATA_FILE_CREATED_TIME, timestamp);
         metadata.put(METADATA_FILE_LAST_ACCESSED_TIME, timestamp);
@@ -377,35 +384,15 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
 
         JSONObject fileSecurityJSON = new JSONObject();
 
-        if (fileSecurity == null) {
-            fileSecurityJSON.put(FILE_SECURITY_ALLOWED_ALL, false);
-            fileSecurityJSON.put(FILE_SECURITY_ALLOWED_USERS,
-                    PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername());
-        } else {
-            boolean allowedAll = fileSecurity.isAllowedAll();
-            fileSecurityJSON.put(FILE_SECURITY_ALLOWED_ALL, allowedAll);
+        boolean allowedAll = fileSecurity.isAllowedAll();
+        fileSecurityJSON.put(FILE_SECURITY_ALLOWED_ALL, allowedAll);
 
-            // Set allowed users and scopes that are required to access protected media.
-            if (!allowedAll) {
-                List<String> allowedUsers = fileSecurity.getAllowedUsers();
-                List<String> allowedScopes = fileSecurity.getAllowedScopes();
-
-                /* Set access level permissions only to the user uploading the media if no allowed users or scopes are
-                present in the request. */
-                if (CollectionUtils.isEmpty(allowedUsers) && CollectionUtils.isEmpty(allowedScopes)) {
-                    fileSecurityJSON.put(FILE_SECURITY_ALLOWED_USERS, PrivilegedCarbonContext
-                            .getThreadLocalCarbonContext().getUsername());
-                } else {
-                    if (CollectionUtils.isNotEmpty(allowedUsers)) {
-                        fileSecurityJSON.put(FILE_SECURITY_ALLOWED_USERS, allowedUsers);
-                    }
-                    if (CollectionUtils.isNotEmpty(allowedScopes)) {
-                        fileSecurityJSON.put(FILE_SECURITY_ALLOWED_SCOPES, allowedScopes);
-                    }
-                }
+        if (!allowedAll) {
+            List<String> allowedUsers = fileSecurity.getAllowedUsers();
+            if (CollectionUtils.isNotEmpty(allowedUsers)) {
+                fileSecurityJSON.put(FILE_SECURITY_ALLOWED_USERS, allowedUsers);
             }
         }
-
         metadata.put(METADATA_FILE_SECURITY, fileSecurityJSON);
     }
 

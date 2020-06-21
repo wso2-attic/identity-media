@@ -28,6 +28,7 @@ public class MediaMetadata {
     private String fileName;
     private String fileTag;
     private String fileContentType;
+    private String resourceOwner;
     private List<String> fileIdentifiers;
     private FileSecurity fileSecurity;
 
@@ -79,5 +80,15 @@ public class MediaMetadata {
     public void setFileContentType(String fileContentType) {
 
         this.fileContentType = fileContentType;
+    }
+
+    public String getResourceOwner() {
+
+        return resourceOwner;
+    }
+
+    public void setResourceOwner(String resourceOwner) {
+
+        this.resourceOwner = resourceOwner;
     }
 }

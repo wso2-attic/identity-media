@@ -29,8 +29,8 @@ import java.util.List;
 public class DatabaseBasedStorageSystemImpl implements StorageSystem {
 
     @Override
-    public String addFile(List<InputStream> inputStreams, MediaMetadata mediaMetadata, String uuid, String tenantDomain)
-            throws StorageSystemException {
+    public String addMedia(List<InputStream> inputStreams, MediaMetadata mediaMetadata, String uuid,
+                           String tenantDomain) throws StorageSystemException {
 
         throw new UnsupportedOperationException("Database based add file operation not supported.");
     }

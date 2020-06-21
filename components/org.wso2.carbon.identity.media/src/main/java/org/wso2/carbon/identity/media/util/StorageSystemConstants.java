@@ -31,6 +31,7 @@ public class StorageSystemConstants {
     public static final String METADATA_FILE_NAME = "name";
     public static final String METADATA_FILE_CONTENT_TYPE = "contentType";
     public static final String METADATA_FILE_TAG = "tag";
+    public static final String METADATA_FILE_RESOURCE_OWNER = "resourceOwner";
     public static final String METADATA_FILE_CREATED_TIME = "createdTime";
     public static final String METADATA_FILE_LAST_ACCESSED_TIME = "lastAccessedTime";
     public static final String METADATA_FILE_SECURITY = "security";
