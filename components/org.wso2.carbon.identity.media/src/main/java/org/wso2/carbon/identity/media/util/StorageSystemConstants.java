@@ -22,13 +22,8 @@ package org.wso2.carbon.identity.media.util;
  */
 public class StorageSystemConstants {
 
-    public static final String ID_SEPERATOR = "_";
     public static final String SYSTEM_PROPERTY_CARBON_HOME = "carbon.home";
     public static final String MEDIA_STORE = "repository/media/";
-    public static final String IDP = "idp";
-    public static final String SP = "app";
-    public static final String USER = "user";
-    public static final String DEFAULT = "default";
     public static final String CONFIGURABLE_UPLOAD_LOCATION = "upload.location";
     public static final String FILE_CREATION_TIME_ATTRIBUTE = "creationTime";
     public static final String METADATA_FILE_SUFFIX = "_meta";

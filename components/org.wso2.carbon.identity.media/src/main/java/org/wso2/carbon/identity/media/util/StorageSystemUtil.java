@@ -15,10 +15,6 @@
  */
 package org.wso2.carbon.identity.media.util;
 
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.util.UUID;
 
 /**
@@ -26,14 +22,8 @@ import java.util.UUID;
  */
 public class StorageSystemUtil {
 
-    private static final Log LOGGER = LogFactory.getLog(StorageSystemUtil.class);
-
-    public static String calculateUUIDHash(String uuid, String timeStamp) {
-
-        return DigestUtils.sha256Hex(uuid + timeStamp);
-    }
-
     public static String calculateUUID() {
+
         return UUID.randomUUID().toString();
     }
 }

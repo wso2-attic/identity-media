@@ -118,10 +118,10 @@ public class StorageSystemManager {
     /**
      * Method which deletes a stored file.
      *
-     * @param id           unique id related to the requesting resource. (This id consists of uuid, a unique hash value
-     *                     and a timestamp.)
-     * @param type         Type of image (could be i,a, or u) i stands for idp,a stands for app, u stands for user
-     * @param tenantDomain tenantdomain of the service call.
+     * @param id           The unique id of the requested resource.
+     * @param type         The high level content-type of the resource (if media content-type is image/png then
+     *                     type would be image).
+     * @param tenantDomain The tenant domain of the service call.
      * @throws StorageSystemException Exception related to file deletion.
      */
     public void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException {
@@ -129,7 +129,7 @@ public class StorageSystemManager {
         StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
         if (storageSystemFactory != null) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(String.format("Delete image for category %s and tenant domain %s.", type, tenantDomain));
+                LOGGER.debug(String.format("Delete media of type: %s in tenant domain: %s.", type, tenantDomain));
             }
             storageSystemFactory.getInstance().deleteFile(id, type, tenantDomain);
         }
