@@ -26,7 +26,7 @@ import java.util.List;
  */
 public interface StorageSystem {
 
-    String addFile(List<InputStream> inputStreams, MediaMetadata mediaMetadata, String uuid, String tenantDomain)
+    String addMedia(List<InputStream> inputStreams, MediaMetadata mediaMetadata, String uuid, String tenantDomain)
             throws StorageSystemException;
 
     DataContent getFile(String id, String tenantDomain, String type) throws StorageSystemException;

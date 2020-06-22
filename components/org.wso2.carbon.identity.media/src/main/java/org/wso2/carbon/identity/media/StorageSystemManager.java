@@ -53,7 +53,7 @@ public class StorageSystemManager {
             StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
             if (storageSystemFactory != null) {
                 String uuid = StorageSystemUtil.calculateUUID();
-                return storageSystemFactory.getInstance().addFile(inputStream, mediaMetadata, uuid, tenantDomain);
+                return storageSystemFactory.getInstance().addMedia(inputStream, mediaMetadata, uuid, tenantDomain);
             }
         }
         if (LOGGER.isDebugEnabled()) {

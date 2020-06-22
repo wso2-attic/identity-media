@@ -27,13 +27,16 @@ public class FileSecurity {
 
     private boolean allowedAll;
     private List<String> allowedUsers;
-    private List<String> allowedScopes;
 
-    public FileSecurity(boolean allowedAll, List<String> allowedUsers, List<String> allowedScopes) {
+    public FileSecurity(boolean allowedAll) {
+
+        this.allowedAll = allowedAll;
+    }
+
+    public FileSecurity(boolean allowedAll, List<String> allowedUsers) {
 
         this.allowedAll = allowedAll;
         this.allowedUsers = allowedUsers;
-        this.allowedScopes = allowedScopes;
     }
 
     public boolean isAllowedAll() {
@@ -54,15 +57,5 @@ public class FileSecurity {
     public void setAllowedUsers(List<String> allowedUsers) {
 
         this.allowedUsers = allowedUsers;
-    }
-
-    public List<String> getAllowedScopes() {
-
-        return allowedScopes;
-    }
-
-    public void setAllowedScopes(List<String> allowedScopes) {
-
-        this.allowedScopes = allowedScopes;
     }
 }
