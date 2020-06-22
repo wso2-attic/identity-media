@@ -42,8 +42,15 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public boolean evaluateSecurity(String accessLevel, String id, String type, String tenantDomain,
-                                    String[] oauth2AllowedScopes) throws StorageSystemException {
+    public boolean evaluateDownloadSecurityForPublicMedia(String id, String type, String tenantDomain) throws
+            StorageSystemException {
+
+        throw new UnsupportedOperationException("Database based security evaluation not supported.");
+    }
+
+    @Override
+    public boolean evaluateDownloadSecurityForProtectedMedia(String id, String type, String tenantDomain) throws
+            StorageSystemException {
 
         throw new UnsupportedOperationException("Database based security evaluation not supported.");
     }

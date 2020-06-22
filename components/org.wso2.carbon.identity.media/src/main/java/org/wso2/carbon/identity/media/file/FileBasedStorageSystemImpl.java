@@ -55,12 +55,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.CONFIGURABLE_UPLOAD_LOCATION;
-import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_ACCESS_LEVEL_ME;
-import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_ACCESS_LEVEL_PUBLIC;
-import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_ACCESS_LEVEL_USER;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_CREATION_TIME_ATTRIBUTE;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_SECURITY_ALLOWED_ALL;
-import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_SECURITY_ALLOWED_SCOPES;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.FILE_SECURITY_ALLOWED_USERS;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.MEDIA_STORE;
 import static org.wso2.carbon.identity.media.util.StorageSystemConstants.METADATA_FILE_CONTENT_TYPE;
@@ -118,14 +114,36 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public boolean evaluateSecurity(String accessLevel, String id, String type, String tenantDomain,
-                                    String[] oauth2AllowedScopes) throws StorageSystemException {
+    public boolean evaluateDownloadSecurityForPublicMedia(String id, String type, String tenantDomain) throws
+            StorageSystemException {
 
         File file;
         try {
             file = getMediaMetadataFile(id, type, tenantDomain);
             if (file != null && file.exists()) {
-                return isFileAccessAllowed(file, accessLevel, oauth2AllowedScopes);
+                return isFileAccessPublic(file);
+            }
+            return false;
+        } catch (IOException e) {
+            String errorMsg = String.format("Error while retrieving metadata for stored file with id: %s and of type " +
+                    "%s in tenant domain: %s", id, type, tenantDomain);
+            throw new StorageSystemException(errorMsg, e);
+        } catch (ParseException e) {
+            String errorMsg = String.format("Unable to parse metadata in JSON format for stored file with id : %s " +
+                    "and of type %s in tenant domain: %s", id, type, tenantDomain);
+            throw new StorageSystemException(errorMsg, e);
+        }
+    }
+
+    @Override
+    public boolean evaluateDownloadSecurityForProtectedMedia(String id, String type, String tenantDomain) throws
+            StorageSystemException {
+
+        File file;
+        try {
+            file = getMediaMetadataFile(id, type, tenantDomain);
+            if (file != null && file.exists()) {
+                return isFileAccessAllowed(file);
             }
             return false;
         } catch (IOException e) {
@@ -289,25 +307,30 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         return null;
     }
 
-    private boolean isFileAccessAllowed(File file, String accessLevel, String[] oauth2AllowedScopes) throws
-            IOException, ParseException {
+    private boolean isFileAccessPublic(File file) throws IOException, ParseException {
 
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
             JSONParser jsonParser = new JSONParser();
             Object metadata = jsonParser.parse(reader);
             HashMap fileSecurity = (HashMap) ((JSONObject) metadata).get(METADATA_FILE_SECURITY);
             if (fileSecurity != null) {
-                if (FILE_ACCESS_LEVEL_PUBLIC.equals(accessLevel)) {
-                    return (Boolean) fileSecurity.get(FILE_SECURITY_ALLOWED_ALL);
-                } else if (FILE_ACCESS_LEVEL_ME.equals(accessLevel)) {
-                    return isUserAllowed(fileSecurity);
-                } else if (FILE_ACCESS_LEVEL_USER.equals(accessLevel)) {
-                    if (isUserAllowed(fileSecurity)) {
-                        return true;
-                    } else {
-                        return isScopeAllowed(fileSecurity, oauth2AllowedScopes);
-                    }
+                return (Boolean) fileSecurity.get(FILE_SECURITY_ALLOWED_ALL);
+            }
+        }
+        return false;
+    }
+
+    private boolean isFileAccessAllowed(File file) throws IOException, ParseException {
+
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+            JSONParser jsonParser = new JSONParser();
+            Object metadata = jsonParser.parse(reader);
+            HashMap fileSecurity = (HashMap) ((JSONObject) metadata).get(METADATA_FILE_SECURITY);
+            if (fileSecurity != null) {
+                if ((Boolean) fileSecurity.get(FILE_SECURITY_ALLOWED_ALL)) {
+                    return true;
                 }
+                return isUserAllowed(fileSecurity);
             }
             return false;
         }
@@ -322,26 +345,6 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
                     String user = (String) allowedUser;
                     if (user.equals(PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername())) {
                         return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isScopeAllowed(HashMap fileSecurity, String[] oauth2AllowedScopes) {
-
-        ArrayList allowedScopes = (ArrayList) fileSecurity.get(FILE_SECURITY_ALLOWED_SCOPES);
-        if (allowedScopes != null) {
-            for (Object allowedScope : allowedScopes) {
-                if (allowedScope instanceof String) {
-                    String scope = (String) allowedScope;
-                    if (oauth2AllowedScopes != null) {
-                        for (String oauth2AllowedScope : oauth2AllowedScopes) {
-                            if (scope.equals(oauth2AllowedScope)) {
-                                return true;
-                            }
-                        }
                     }
                 }
             }

@@ -89,28 +89,55 @@ public class StorageSystemManager {
     }
 
     /**
-     * @param accessLevel         The access level of the media (can be user, me or public).
+     * Security evaluation for downloading public resource.
+     *
      * @param id                  The unique id related to the requesting resource.
      * @param type                The high level content-type of the resource (if media content-type is image/png then
      *                            type would be image).
      * @param tenantDomain        The tenant domain of the service call.
-     * @param oauth2AllowedScopes The token scopes.
      * @return true if access to the resource is permitted.
      * @throws StorageSystemException Exception related to security evaluation during file download.
      */
-    public boolean evaluateSecurity(String accessLevel, String id, String type, String tenantDomain,
-                                    String[] oauth2AllowedScopes) throws StorageSystemException {
+    public boolean evaluateDownloadSecurityForPublicMedia(String id, String type, String tenantDomain)
+            throws StorageSystemException {
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(String.format("Download image for category %s and tenant domain %s.", type, tenantDomain));
+            LOGGER.debug(String.format("Evaluate security for media of type: %s, unique id: %s and tenant domain %s.",
+                    id, type, tenantDomain));
         }
         StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
         if (storageSystemFactory != null) {
-            return storageSystemFactory.getInstance().evaluateSecurity(accessLevel, id, type, tenantDomain,
-                    oauth2AllowedScopes);
+            return storageSystemFactory.getInstance().evaluateDownloadSecurityForPublicMedia(id, type, tenantDomain);
         }
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("StorageSystemFactory object is null hence returning null.");
+            LOGGER.debug("StorageSystemFactory object is null hence returning security evaluation result as false.");
+        }
+        return false;
+    }
+
+    /**
+     * Security evaluation for downloading protected resource.
+     *
+     * @param id                  The unique id related to the requesting resource.
+     * @param type                The high level content-type of the resource (if media content-type is image/png then
+     *                            type would be image).
+     * @param tenantDomain        The tenant domain of the service call.
+     * @return true if access to the resource is permitted.
+     * @throws StorageSystemException Exception related to security evaluation during file download.
+     */
+    public boolean evaluateDownloadSecurityForProtectedMedia(String id, String type, String tenantDomain)
+            throws StorageSystemException {
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("Evaluate security for media of type: %s, unique id: %s and tenant domain %s.",
+                    id, type, tenantDomain));
+        }
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        if (storageSystemFactory != null) {
+            return storageSystemFactory.getInstance().evaluateDownloadSecurityForProtectedMedia(id, type, tenantDomain);
+        }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("StorageSystemFactory object is null hence returning security evaluation result as false.");
         }
         return false;
     }

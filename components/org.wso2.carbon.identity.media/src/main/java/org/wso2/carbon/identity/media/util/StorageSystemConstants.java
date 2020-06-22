@@ -37,9 +37,5 @@ public class StorageSystemConstants {
     public static final String METADATA_FILE_SECURITY = "security";
     public static final String FILE_SECURITY_ALLOWED_ALL = "allowedAll";
     public static final String FILE_SECURITY_ALLOWED_USERS = "allowedUsers";
-    public static final String FILE_SECURITY_ALLOWED_SCOPES = "allowedScopes";
-    public static final String FILE_ACCESS_LEVEL_ME = "me";
-    public static final String FILE_ACCESS_LEVEL_USER = "user";
-    public static final String FILE_ACCESS_LEVEL_PUBLIC = "public";
 
 }

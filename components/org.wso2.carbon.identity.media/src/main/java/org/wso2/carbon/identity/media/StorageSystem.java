@@ -31,8 +31,11 @@ public interface StorageSystem {
 
     DataContent getFile(String id, String tenantDomain, String type) throws StorageSystemException;
 
-    boolean evaluateSecurity(String accessLevel, String id, String type, String tenantDomain,
-                             String[] oauth2AllowedScopes) throws StorageSystemException;
+    boolean evaluateDownloadSecurityForPublicMedia(String id, String type, String tenantDomain) throws
+            StorageSystemException;
+
+    boolean evaluateDownloadSecurityForProtectedMedia(String id, String type, String tenantDomain) throws
+            StorageSystemException;
 
     void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException;
 
