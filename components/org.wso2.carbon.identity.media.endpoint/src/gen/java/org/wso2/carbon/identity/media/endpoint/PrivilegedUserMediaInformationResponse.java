@@ -43,8 +43,8 @@ public class PrivilegedUserMediaInformationResponse  {
         this.links = links;
         return this;
     }
-    
-    @ApiModelProperty(example = "[\"/t/carbon.super/api/server/v1/media/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d\"]", value = "")
+
+    @ApiModelProperty(example = "[\"/t/carbon.super/api/identity/media/v1.0/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d\"]", value = "")
     @JsonProperty("links")
     @Valid
     public List<String> getLinks() {

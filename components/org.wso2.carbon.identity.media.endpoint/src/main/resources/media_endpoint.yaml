@@ -411,7 +411,7 @@ components:
                 description: Identifier for the sub resource.
               href:
                 type: string
-                example: '/t/carbon.super/api/server/v1/media/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d?identifier=large'
+                example: '/t/carbon.super/api/identity/media/v1.0/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d?identifier=large'
                 description: Location of the uploaded sub resource.
 
     PrivilegedUserMediaInformationResponse:
@@ -447,7 +447,7 @@ components:
       items:
         type: string
         description: Location of the media.
-      example: ['/t/carbon.super/api/server/v1/media/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d']
+      example: ['/t/carbon.super/api/identity/media/v1.0/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d']
 
     DownloadFile:
       type: string
