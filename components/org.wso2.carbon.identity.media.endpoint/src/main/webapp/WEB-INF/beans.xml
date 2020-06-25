@@ -30,6 +30,9 @@
     <bean class="org.wso2.carbon.identity.media.endpoint.impl.MeApiServiceImpl"/>
     <bean class="org.wso2.carbon.identity.media.endpoint.impl.PublicApiServiceImpl"/>
     <bean class="org.wso2.carbon.identity.media.endpoint.impl.UserApiServiceImpl"/>
+    <bean class="org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants"/>
+    <bean class="org.wso2.carbon.identity.media.endpoint.common.Util"/>
+    <bean class="org.wso2.carbon.identity.media.endpoint.service.MediaService"/>
 
     <jaxrs:server id="services" address="/">
         <jaxrs:serviceBeans>
@@ -39,7 +42,14 @@
             <bean class="org.wso2.carbon.identity.media.endpoint.UserApi"/>
         </jaxrs:serviceBeans>
         <jaxrs:providers>
-            <bean class="com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider"/>
+            <bean class="com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider">
+                <constructor-arg>
+                    <bean class="com.fasterxml.jackson.databind.ObjectMapper">
+                        <property name="serializationInclusion" value="NON_NULL" />
+                    </bean>
+                </constructor-arg>
+            </bean>
+            <bean class="org.wso2.carbon.identity.media.endpoint.exception.mapper.JsonProcessingExceptionMapper"/>
         </jaxrs:providers>
     </jaxrs:server>
 
