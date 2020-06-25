@@ -50,17 +50,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.FileTime;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.CONFIGURABLE_UPLOAD_LOCATION;
-import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.FILE_CREATION_TIME_ATTRIBUTE;
 import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.MEDIA_CONTENT_TYPE;
-import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.MEDIA_CREATED_TIME;
-import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.MEDIA_FILE_LAST_ACCESSED_TIME;
 import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.MEDIA_NAME;
 import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.MEDIA_RESOURCE_OWNER;
 import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.MEDIA_SECURITY;
@@ -254,10 +249,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
                 }
             }
 
-            FileTime createdTime = (FileTime) Files.getAttribute(targetLocation, FILE_CREATION_TIME_ATTRIBUTE);
-            String timeStampAsString = Long.toString(createdTime.toMillis());
-            storeMediaMetadata(targetLocation, fileName, fileContentType, fileTag, resourceOwner, fileSecurity,
-                    timeStampAsString);
+            storeMediaMetadata(targetLocation, fileName, fileContentType, fileTag, resourceOwner, fileSecurity);
 
             return uuid;
         }
@@ -303,33 +295,16 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             Path filePath = fileStorageLocation.resolve(uuid).normalize();
             if (filePath.toFile().exists()) {
                 mediaFileDownloadData.setMediaFile(filePath.toFile());
-                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
                 String metadataFileName = uuid + METADATA_FILE_SUFFIX + METADATA_FILE_EXTENSION;
                 Path metadataFilePath = fileStorageLocation.resolve(metadataFileName).normalize();
                 if (metadataFilePath.toFile().exists()) {
                     File metadataFile = metadataFilePath.toFile();
-                    updateFileLastAccessedTime(metadataFile, String.valueOf(timestamp.getTime()));
                     mediaFileDownloadData.setResponseContentType(getResponseContentTypeFromMetadata(metadataFile));
                 }
                 return mediaFileDownloadData;
             }
         }
         return null;
-    }
-
-    private void updateFileLastAccessedTime(File metadataFile, String timeStamp) throws IOException, ParseException {
-
-        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(metadataFile),
-                StandardCharsets.UTF_8)) {
-            JSONParser parser = new JSONParser();
-            JSONObject metadata = (JSONObject) parser.parse(reader);
-            metadata.put(MEDIA_FILE_LAST_ACCESSED_TIME, timeStamp);
-
-            try (FileOutputStream fileStream = new FileOutputStream(metadataFile);
-                 Writer writer = new OutputStreamWriter(fileStream, StandardCharsets.UTF_8)) {
-                writer.write(metadata.toJSONString());
-            }
-        }
     }
 
     private String getResponseContentTypeFromMetadata(File metadataFile) throws IOException, ParseException {
@@ -448,8 +423,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     private void storeMediaMetadata(Path targetLocation, String fileName, String fileContentType, String fileTag,
-                                    String resourceOwner, FileSecurity fileSecurity, String timestamp)
-            throws IOException {
+                                    String resourceOwner, FileSecurity fileSecurity) throws IOException {
 
         Path metadataTargetLocation = targetLocation.resolveSibling(targetLocation.getFileName() + METADATA_FILE_SUFFIX
                 + METADATA_FILE_EXTENSION);
@@ -469,8 +443,6 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             metadata.put(MEDIA_RESOURCE_OWNER, resourceOwner);
         }
         storeFileSecurityMetadata(fileSecurity, metadata);
-        metadata.put(MEDIA_CREATED_TIME, timestamp);
-        metadata.put(MEDIA_FILE_LAST_ACCESSED_TIME, timestamp);
 
         try (FileOutputStream fileStream = new FileOutputStream(metadataTargetLocation.toFile());
              Writer writer = new OutputStreamWriter(fileStream, StandardCharsets.UTF_8)) {
