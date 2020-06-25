@@ -16,6 +16,7 @@
 package org.wso2.carbon.identity.media.core;
 
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
+import org.wso2.carbon.identity.media.core.model.MediaInformation;
 import org.wso2.carbon.identity.media.core.model.MediaMetadata;
 
 import java.io.InputStream;
@@ -37,7 +38,13 @@ public interface StorageSystem {
     boolean evaluateDownloadSecurityForProtectedMedia(String id, String type, String tenantDomain) throws
             StorageSystemException;
 
-    void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException;
+    boolean evaluateMediaManagementSecurityForEndUser(String id, String type, String tenantDomain) throws
+            StorageSystemException;
+
+    boolean isMediaDeleted(String id, String type, String tenantDomain) throws StorageSystemException;
+
+    MediaInformation getMediaInformation(String id, String type, String tenantDomain) throws
+            StorageSystemException;
 
     InputStream transform(String id, String type, String tenantDomain, InputStream inputStream)
             throws StorageSystemException;

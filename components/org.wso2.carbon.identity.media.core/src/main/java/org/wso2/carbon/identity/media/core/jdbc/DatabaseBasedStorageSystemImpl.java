@@ -18,6 +18,7 @@ package org.wso2.carbon.identity.media.core.jdbc;
 import org.wso2.carbon.identity.media.core.DataContent;
 import org.wso2.carbon.identity.media.core.StorageSystem;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
+import org.wso2.carbon.identity.media.core.model.MediaInformation;
 import org.wso2.carbon.identity.media.core.model.MediaMetadata;
 
 import java.io.InputStream;
@@ -56,9 +57,23 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public void deleteFile(String id, String type, String tenantDomain) throws StorageSystemException {
+    public boolean evaluateMediaManagementSecurityForEndUser(String id, String type, String tenantDomain) throws
+            StorageSystemException {
+
+        throw new UnsupportedOperationException("Database based security evaluation not supported.");
+    }
+
+    @Override
+    public boolean isMediaDeleted(String id, String type, String tenantDomain) throws StorageSystemException {
 
         throw new UnsupportedOperationException("Database based delete file operation not supported.");
+    }
+
+    @Override
+    public MediaInformation getMediaInformation(String id, String type, String tenantDomain) throws
+            StorageSystemException {
+
+        throw new UnsupportedOperationException("Database based media information retrieval not supported.");
     }
 
     @Override
