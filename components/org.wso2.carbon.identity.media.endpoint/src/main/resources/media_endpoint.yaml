@@ -1,0 +1,525 @@
+openapi: 3.0.0
+info:
+  version: 'v1.0'
+  title: 'WSO2 Identity Server - Media Service API'
+  description: 'This is the RESTful API for media upload/download in WSO2 Identity Server'
+  contact:
+    name: WSO2 Identity Server
+    url: 'https://wso2.com/identity-and-access-management'
+    email: architecture@wso2.org
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: https://localhost:9443/t/{tenant-domain}/api/identity/media/v1.0
+    variables:
+      tenant-domain:
+        default: carbon.super
+
+paths:
+
+  /user/{type}:
+    post:
+      tags:
+        - Upload Media
+      summary: A privileged user uploads a single resource file or multiple representations of a single resource and metadata associated with the resource file(s).
+      operationId: privilegedUserUploadMedia
+      security:
+        - BasicAuth: []
+        - OAuth2: []
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrivilegedUserResourceFiles'
+      responses:
+        '201':
+          description: File(s) uploaded successfully.
+          headers:
+            Location:
+              description: The location of the newly uploaded file. If multiple files uploaded then the base location of the uploaded files will be returned as the location header.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultipleFilesUploadResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+
+  /me/{type}:
+    post:
+      tags:
+        - Upload Media
+      summary: A user uploads a single resource file or multiple representations of a single resource and metadata associated with the resource file(s).
+      operationId: uploadMedia
+      security:
+        - BasicAuth: []
+        - OAuth2: []
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResourceFiles'
+      responses:
+        '201':
+          description: File(s) uploaded successfully.
+          headers:
+            Location:
+              description: The location of the newly uploaded file. If multiple files uploaded then the base location of the uploaded files will be returned as the location header.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultipleFilesUploadResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+
+  /content/{type}/{id}:
+    get:
+      tags:
+        - Download Media
+      summary: An end-user or priviledged user downloads an access protected file.
+      operationId: downloadMedia
+      security:
+        - BasicAuth: []
+        - OAuth2: []
+      parameters:
+        - in: query
+          name: identifier
+          schema:
+            type: string
+          example: 'medium'
+        - $ref: '#/components/parameters/typeParam'
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: File downloaded successfully.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                $ref: '#/components/schemas/DownloadFile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+
+  /public/{type}/{id}:
+    get:
+      tags:
+        - Download Media
+      summary: Download a publicly available file.
+      operationId: downloadPublicMedia
+      parameters:
+        - in: query
+          name: identifier
+          schema:
+            type: string
+          example: 'medium'
+        - $ref: '#/components/parameters/typeParam'
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: File downloaded successfully.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                $ref: '#/components/schemas/DownloadFile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+
+  /user/{type}/{id}:
+    get:
+      tags:
+        - Get Media Details
+      summary: A privileged user requests media location(s) and associated metadata for the given media id.
+      operationId: privilegedUserListMediaInformation
+      security:
+        - BasicAuth: []
+        - OAuth2: []
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Requested media information retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivilegedUserMediaInformationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    delete:
+      tags:
+        - Delete Media
+      summary: A privileged user deletes a resource file and metadata associated with the resource file.
+      operationId: privilegedUserDeleteMedia
+      security:
+        - BasicAuth: []
+        - OAuth2: []
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '204':
+          description: Resource file and metadata deleted successfully.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /me/{type}/{id}:
+    get:
+      tags:
+        - Get Media Details
+      summary: An end-user requests media location(s) and associated metadata for the given media id.
+      operationId: listMediaInformation
+      security:
+        - BasicAuth: []
+        - OAuth2: []
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '200':
+          description: Requested media information retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaInformationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    delete:
+      tags:
+        - Delete Media
+      summary: An end-user deletes a resource file and metadata associated with the resource file.
+      operationId: deleteMedia
+      security:
+        - BasicAuth: []
+        - OAuth2: []
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+        - $ref: '#/components/parameters/idParam'
+      responses:
+        '204':
+          description: Resource file and metadata deleted successfully.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  parameters:
+    idParam:
+      in: path
+      name: id
+      description: Unique identifier for the file.
+      required: true
+      schema:
+        type: string
+      example: 6e41cb95-c3b3-4e6c-928a-acb1b88e991d
+    typeParam:
+      in: path
+      name: type
+      description: The media type.
+      required: true
+      schema:
+        type: string
+      example: image
+
+  schemas:
+    # Multiple file uploads will not be supported in the first phase of the implementation.
+    ResourceFiles:
+      type: object
+      properties:
+        files:
+          $ref: '#/components/schemas/Files'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+      required:
+        - files
+
+    # Multiple file uploads will not be supported in the first phase of the implementation.
+    PrivilegedUserResourceFiles:
+      type: object
+      properties:
+        files:
+          $ref: '#/components/schemas/Files'
+        metadata:
+          $ref: '#/components/schemas/PrivilegedUserMetadata'
+      required:
+        - files
+
+    Files:
+      type: array
+      items:
+        type: string
+        format: binary
+
+    Metadata:
+      type: object
+      properties:
+        tag:
+          $ref: '#/components/schemas/Tag'
+        security:
+          $ref: '#/components/schemas/Security'
+        identifiers:
+          # Identifiers should be in the order in which the files are uploaded as an array.
+          $ref: '#/components/schemas/Identifiers'
+
+    PrivilegedUserMetadata:
+      type: object
+      properties:
+        tag:
+          $ref: '#/components/schemas/Tag'
+        security:
+          $ref: '#/components/schemas/PrivilegedUserSecurity'
+        identifiers:
+          # Identifiers should be in the order in which the files are uploaded as an array.
+          $ref: '#/components/schemas/Identifiers'
+
+    Security:
+      type: object
+      properties:
+        allowedAll:
+          $ref: '#/components/schemas/AllowedAll'
+
+    PrivilegedUserSecurity:
+      allOf:
+        - $ref: '#/components/schemas/Security'
+        - type: object
+          properties:
+            allowedUsers:
+              $ref: '#/components/schemas/AllowedUsers'
+
+    Tag:
+      type: string
+      example: 'user'
+      description: The file tag.
+
+    AllowedAll:
+      type: boolean
+      description: Defines whether the file is publicly available for access or has restricted access.
+      example: false
+
+    AllowedUsers:
+      type: array
+      description: The set of users entitled to access the file.
+      items:
+        type: string
+      example: ['user1', 'user2']
+
+    Identifiers:
+      type: array
+      items:
+        type: string
+      example: ['large', 'medium', 'small']
+      description: In a multiple file upload (representing a single resource) scenario, the identifiers will uniquely identify each of the files. The identifiers should be in the order in which the files are uploaded as an array (file index should match with identifiers index).
+
+    # Multiple file uploads will not be supported in the first phase of the implementation.
+    MultipleFilesUploadResponse:
+      type: object
+      description: Location of each file uploaded in a scenario where multiple representations of a single resource is uploaded.
+      properties:
+        links:
+          type: array
+          items:
+            type: object
+            properties:
+              rel:
+                type: string
+                example: 'large'
+                description: Identifier for the sub resource.
+              href:
+                type: string
+                example: '/t/carbon.super/api/identity/media/v1.0/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d?identifier=large'
+                description: Location of the uploaded sub resource.
+
+    PrivilegedUserMediaInformationResponse:
+      type: object
+      description: Location(s) of media and metadata.
+      properties:
+        links:
+          $ref: '#/components/schemas/Links'
+        metadata:
+          type: object
+          properties:
+            tag:
+              $ref: '#/components/schemas/Tag'
+            security:
+              $ref: '#/components/schemas/PrivilegedUserSecurity'
+
+    MediaInformationResponse:
+      type: object
+      description: Location(s) of media and metadata.
+      properties:
+        links:
+          $ref: '#/components/schemas/Links'
+        metadata:
+          type: object
+          properties:
+            tag:
+              $ref: '#/components/schemas/Tag'
+            security:
+              $ref: '#/components/schemas/Security'
+
+    Links:
+      type: array
+      items:
+        type: string
+        description: Location of the media.
+      example: ['/t/carbon.super/api/identity/media/v1.0/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d']
+
+    DownloadFile:
+      type: string
+      format: binary
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: MS0001
+          description: An error code.
+        message:
+          type: string
+          example: Some Error Message
+          description: An error message.
+        description:
+          type: string
+          example: Some Error Description
+          description: An error description.
+        traceId:
+          type: string
+          example: TR0001
+          description: An error trace identifier.
+
+  #-----------------------------------------------------
+  # Descriptions of media service API responses.
+  #-----------------------------------------------------
+  responses:
+    BadRequest:
+      description: Invalid input in the request.
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Requested resource is not found.
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication information is missing or invalid.
+    Forbidden:
+      description: Access forbidden.
+    ServerError:
+      description: Internal server error.
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotImplemented:
+      description: Not implemented.
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  #-----------------------------------------------------
+  # Applicable authentication mechanisms.
+  #-----------------------------------------------------
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: 'https://localhost:9443/oauth/authorize'
+          tokenUrl: 'https://localhost:9443/oauth/token'
+          scopes: {}
