@@ -43,21 +43,21 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public boolean evaluateDownloadSecurityForPublicMedia(String id, String type, String tenantDomain) throws
+    public boolean isDownloadAllowedForPublicMedia(String id, String type, String tenantDomain) throws
             StorageSystemException {
 
         throw new UnsupportedOperationException("Database based security evaluation not supported.");
     }
 
     @Override
-    public boolean evaluateDownloadSecurityForProtectedMedia(String id, String type, String tenantDomain) throws
+    public boolean isDownloadAllowedForProtectedMedia(String id, String type, String tenantDomain) throws
             StorageSystemException {
 
         throw new UnsupportedOperationException("Database based security evaluation not supported.");
     }
 
     @Override
-    public boolean evaluateMediaManagementSecurityForEndUser(String id, String type, String tenantDomain) throws
+    public boolean isMediaManagementAllowedForEndUser(String id, String type, String tenantDomain) throws
             StorageSystemException {
 
         throw new UnsupportedOperationException("Database based security evaluation not supported.");
