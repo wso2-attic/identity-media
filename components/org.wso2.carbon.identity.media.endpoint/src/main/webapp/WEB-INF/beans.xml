@@ -40,6 +40,7 @@
         </jaxrs:serviceBeans>
         <jaxrs:providers>
             <bean class="com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider"/>
+            <bean class="org.wso2.carbon.identity.media.endpoint.filter.AuthorizationFilter"/>
         </jaxrs:providers>
     </jaxrs:server>
 
