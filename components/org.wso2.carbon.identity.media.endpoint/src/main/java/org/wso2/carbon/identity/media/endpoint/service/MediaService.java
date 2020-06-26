@@ -173,7 +173,7 @@ public class MediaService {
      */
     public void validateMediaType(String mediaTypePathParam, MediaType mediaType) {
 
-        if (!mediaTypePathParam.equals(mediaType.getType())) {
+        if (!StringUtils.equals(mediaTypePathParam, mediaType.getType())) {
             throw handleException(Response.Status.FORBIDDEN,
                     MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UPLOADING_MEDIA_CONTENT_TYPE_MISMATCH,
                     mediaTypePathParam);
@@ -185,9 +185,9 @@ public class MediaService {
                     MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UPLOADING_MEDIA_UNSUPPORTED_CONTENT_TYPE);
         }
 
-        List<String> allowedContentTypeSubTypes = loadAllowedContentTypeSubTypes(mediaType.getType());
-        if (CollectionUtils.isEmpty(allowedContentTypeSubTypes) ||
-                !allowedContentTypeSubTypes.contains(mediaType.getSubtype())) {
+        List<String> allowedContentSubTypes = loadAllowedContentSubTypes(mediaType.getType());
+        if (CollectionUtils.isEmpty(allowedContentSubTypes) ||
+                !allowedContentSubTypes.contains(mediaType.getSubtype())) {
             throw handleException(Response.Status.FORBIDDEN,
                     MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UPLOADING_MEDIA_UNSUPPORTED_CONTENT_TYPE);
         }
@@ -221,7 +221,7 @@ public class MediaService {
      *
      * @return list of allowed sub content types for a given content type.
      */
-    private List<String> loadAllowedContentTypeSubTypes(String contentType) {
+    private List<String> loadAllowedContentSubTypes(String contentType) {
 
         Properties properties = new Properties();
         try {
