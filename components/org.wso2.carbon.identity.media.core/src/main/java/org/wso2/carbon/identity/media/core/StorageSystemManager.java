@@ -99,7 +99,7 @@ public class StorageSystemManager {
      * @return true if access to the resource is permitted.
      * @throws StorageSystemException Exception related to security evaluation during file download.
      */
-    public boolean evaluateDownloadSecurityForPublicMedia(String id, String type, String tenantDomain)
+    public boolean isDownloadAllowedForPublicMedia(String id, String type, String tenantDomain)
             throws StorageSystemException {
 
         if (LOGGER.isDebugEnabled()) {
@@ -108,7 +108,7 @@ public class StorageSystemManager {
         }
         StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
         if (storageSystemFactory != null) {
-            return storageSystemFactory.getInstance().evaluateDownloadSecurityForPublicMedia(id, type, tenantDomain);
+            return storageSystemFactory.getInstance().isDownloadAllowedForPublicMedia(id, type, tenantDomain);
         }
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("StorageSystemFactory object is null hence returning security evaluation result as false.");
@@ -126,7 +126,7 @@ public class StorageSystemManager {
      * @return true if access to the resource is permitted.
      * @throws StorageSystemException Exception related to security evaluation during file download.
      */
-    public boolean evaluateDownloadSecurityForProtectedMedia(String id, String type, String tenantDomain)
+    public boolean isDownloadAllowedForProtectedMedia(String id, String type, String tenantDomain)
             throws StorageSystemException {
 
         if (LOGGER.isDebugEnabled()) {
@@ -135,7 +135,7 @@ public class StorageSystemManager {
         }
         StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
         if (storageSystemFactory != null) {
-            return storageSystemFactory.getInstance().evaluateDownloadSecurityForProtectedMedia(id, type, tenantDomain);
+            return storageSystemFactory.getInstance().isDownloadAllowedForProtectedMedia(id, type, tenantDomain);
         }
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("StorageSystemFactory object is null hence returning security evaluation result as false.");
@@ -153,7 +153,7 @@ public class StorageSystemManager {
      * @return true if media management is permitted.
      * @throws StorageSystemException Exception related to security evaluation.
      */
-    public boolean evaluateMediaManagementSecurityForEndUser(String id, String type, String tenantDomain)
+    public boolean isMediaManagementAllowedForEndUser(String id, String type, String tenantDomain)
             throws StorageSystemException {
 
         if (LOGGER.isDebugEnabled()) {
@@ -162,7 +162,7 @@ public class StorageSystemManager {
         }
         StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
         if (storageSystemFactory != null) {
-            return storageSystemFactory.getInstance().evaluateMediaManagementSecurityForEndUser(id, type, tenantDomain);
+            return storageSystemFactory.getInstance().isMediaManagementAllowedForEndUser(id, type, tenantDomain);
         }
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("StorageSystemFactory object is null hence returning security evaluation result as false.");

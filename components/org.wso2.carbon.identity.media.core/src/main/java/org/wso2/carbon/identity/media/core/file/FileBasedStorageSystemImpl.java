@@ -113,7 +113,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public boolean evaluateDownloadSecurityForPublicMedia(String id, String type, String tenantDomain) throws
+    public boolean isDownloadAllowedForPublicMedia(String id, String type, String tenantDomain) throws
             StorageSystemException {
 
         File file;
@@ -135,7 +135,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public boolean evaluateDownloadSecurityForProtectedMedia(String id, String type, String tenantDomain) throws
+    public boolean isDownloadAllowedForProtectedMedia(String id, String type, String tenantDomain) throws
             StorageSystemException {
 
         File file;
@@ -157,7 +157,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public boolean evaluateMediaManagementSecurityForEndUser(String id, String type, String tenantDomain) throws
+    public boolean isMediaManagementAllowedForEndUser(String id, String type, String tenantDomain) throws
             StorageSystemException {
 
         File file;

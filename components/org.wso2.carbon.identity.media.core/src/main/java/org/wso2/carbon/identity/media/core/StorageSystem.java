@@ -32,13 +32,13 @@ public interface StorageSystem {
 
     DataContent getFile(String id, String tenantDomain, String type) throws StorageSystemException;
 
-    boolean evaluateDownloadSecurityForPublicMedia(String id, String type, String tenantDomain) throws
+    boolean isDownloadAllowedForPublicMedia(String id, String type, String tenantDomain) throws
             StorageSystemException;
 
-    boolean evaluateDownloadSecurityForProtectedMedia(String id, String type, String tenantDomain) throws
+    boolean isDownloadAllowedForProtectedMedia(String id, String type, String tenantDomain) throws
             StorageSystemException;
 
-    boolean evaluateMediaManagementSecurityForEndUser(String id, String type, String tenantDomain) throws
+    boolean isMediaManagementAllowedForEndUser(String id, String type, String tenantDomain) throws
             StorageSystemException;
 
     boolean isMediaDeleted(String id, String type, String tenantDomain) throws StorageSystemException;
