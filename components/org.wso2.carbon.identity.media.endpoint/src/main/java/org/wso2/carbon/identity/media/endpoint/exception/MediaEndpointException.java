@@ -19,6 +19,8 @@ package org.wso2.carbon.identity.media.endpoint.exception;
 import org.wso2.carbon.identity.media.endpoint.Error;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
@@ -28,7 +30,8 @@ public class MediaEndpointException extends WebApplicationException {
 
     public MediaEndpointException(Response.Status status, Error error) {
 
-        super(Response.status(status).entity(error).build());
+        super(Response.status(status).entity(error).header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                .build());
     }
 
     public MediaEndpointException(Response.Status status) {

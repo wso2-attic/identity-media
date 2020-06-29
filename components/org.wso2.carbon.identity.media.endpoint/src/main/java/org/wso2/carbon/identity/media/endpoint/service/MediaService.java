@@ -176,7 +176,7 @@ public class MediaService {
      * @param mediaTypePathParam The media type available as a path parameter in the upload request.
      * @param mediaType          The content type of the uploaded media.
      */
-    public void validateMediaType(String mediaTypePathParam, MediaType mediaType) {
+    public void validateFileUploadMediaTypes(String mediaTypePathParam, MediaType mediaType) {
 
         if (!StringUtils.equals(mediaTypePathParam, mediaType.getType())) {
             throw handleException(Response.Status.FORBIDDEN,
@@ -260,6 +260,8 @@ public class MediaService {
             return Response.status(Response.Status.NOT_IMPLEMENTED).build();
         }
 
+        validateAllowedMediaTypes(type);
+
         DataContent resource = downloadMedia(type, id);
         CacheControl cacheControl = new CacheControl();
         cacheControl.setMaxAge(86400);
@@ -273,7 +275,10 @@ public class MediaService {
                     HTTPConstants.HEADER_CONTENT_TYPE, ((StreamContent) resource).getResponseContentType())
                     .cacheControl(cacheControl).build();
         }
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage
+                .ERROR_CODE_ERROR_DOWNLOADING_MEDIA;
+        Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
+        throw handleException(status, errorMessage, id);
     }
 
     private DataContent downloadMedia(String type, String id) {
@@ -291,7 +296,21 @@ public class MediaService {
             MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                     ERROR_CODE_ERROR_DOWNLOADING_MEDIA;
             Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
-            throw handleException(e, errorMessage, LOG, status);
+            throw handleException(e, errorMessage, LOG, status, id);
+        }
+    }
+
+    /**
+     * Validate if the media content type present as a path parameter in the request is a supported content type.
+     *
+     * @param mediaTypePathParam The media type available as a path parameter in the request.
+     */
+    private void validateAllowedMediaTypes(String mediaTypePathParam) {
+
+        List<String> allowedContentTypes = loadAllowedContentTypes();
+        if (CollectionUtils.isEmpty(allowedContentTypes) || !allowedContentTypes.contains(mediaTypePathParam)) {
+            throw handleException(Response.Status.FORBIDDEN,
+                    MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UNSUPPORTED_CONTENT_TYPE_PATH_PARAM);
         }
     }
 

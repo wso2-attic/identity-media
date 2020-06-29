@@ -48,7 +48,7 @@ public class UserApiServiceImpl implements UserApiService {
     public Response privilegedUserUploadMedia(String type, List<InputStream> filesInputStream,
                                               List<Attachment> filesDetail, PrivilegedUserMetadata metadata) {
 
-        mediaService.validateMediaType(type, filesDetail.get(0).getContentType());
+        mediaService.validateFileUploadMediaTypes(type, filesDetail.get(0).getContentType());
         // Only single file upload will be supported in the first phase of the implementation.
         if (filesInputStream.size() > 1) {
             return Response.status(Response.Status.NOT_IMPLEMENTED).build();

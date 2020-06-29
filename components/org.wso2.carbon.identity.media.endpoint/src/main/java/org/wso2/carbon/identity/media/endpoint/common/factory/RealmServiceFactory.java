@@ -38,9 +38,8 @@ public class RealmServiceFactory extends AbstractFactoryBean<RealmService> {
     protected RealmService createInstance() throws Exception {
 
         if (this.realmService == null) {
-            RealmService realmService = (RealmService)
-                    PrivilegedCarbonContext.getThreadLocalCarbonContext()
-                            .getOSGiService(RealmService.class, null);
+            RealmService realmService = (RealmService) PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                    .getOSGiService(RealmService.class, null);
             if (realmService != null) {
                 this.realmService = realmService;
             } else {
