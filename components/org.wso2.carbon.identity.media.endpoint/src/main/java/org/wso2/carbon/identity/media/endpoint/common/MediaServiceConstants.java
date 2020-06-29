@@ -31,6 +31,7 @@ public class MediaServiceConstants {
     static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
     public static final String CONTENT_PATH_COMPONENT = "content";
     public static final String PUBLIC_PATH_COMPONENT = "public";
+    public static final String ME_PATH_COMPONENT = "me";
     public static final String MEDIA_PROPERTIES_FILE_NAME = "media.properties";
     public static final String ALLOWED_CONTENT_TYPES = "AllowedContentTypes";
     public static final String ALLOWED_CONTENT_SUB_TYPES = ".AllowedContentSubTypes";
