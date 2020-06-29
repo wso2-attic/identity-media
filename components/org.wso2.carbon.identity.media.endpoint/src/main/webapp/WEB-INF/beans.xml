@@ -50,6 +50,7 @@
                 </constructor-arg>
             </bean>
             <bean class="org.wso2.carbon.identity.media.endpoint.exception.mapper.JsonProcessingExceptionMapper"/>
+            <bean class="org.wso2.carbon.identity.media.endpoint.filter.AuthorizationFilter"/>
         </jaxrs:providers>
     </jaxrs:server>
 
