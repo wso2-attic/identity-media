@@ -25,7 +25,7 @@ import org.wso2.carbon.identity.auth.service.AuthenticationContext;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.media.core.StorageSystemManager;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
-import org.wso2.carbon.identity.media.core.internal.MediaServiceDataHolder;
+import org.wso2.carbon.identity.media.endpoint.common.MediaEndpointDataHolder;
 import org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants;
 import org.wso2.carbon.user.api.AuthorizationManager;
 import org.wso2.carbon.user.api.UserRealm;
@@ -98,7 +98,7 @@ public class AuthorizationFilter implements ContainerRequestFilter {
                         user = ((AuthenticationContext) containerRequestContext.getProperty(AUTH_CONTEXT)).getUser();
                     }
                     if (user != null) {
-                        RealmService realmService = MediaServiceDataHolder.getInstance().getRealmService();
+                        RealmService realmService = MediaEndpointDataHolder.getInstance().getRealmService();
                         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
                         UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
                         if (tenantUserRealm != null) {
