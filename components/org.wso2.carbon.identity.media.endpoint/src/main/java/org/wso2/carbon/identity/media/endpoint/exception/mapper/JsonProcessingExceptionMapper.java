@@ -41,7 +41,7 @@ public class JsonProcessingExceptionMapper implements ExceptionMapper<JsonProces
     public Response toResponse(JsonProcessingException e) {
 
         if (log.isDebugEnabled()) {
-            log.debug("Provided JSON request content is not in the valid format:", e);
+            log.debug("Provided JSON request content is not in the valid format", e);
         }
 
         Error error = getError(MediaServiceConstants.ErrorMessage.ERROR_CODE_INVALID_REQUEST_BODY);

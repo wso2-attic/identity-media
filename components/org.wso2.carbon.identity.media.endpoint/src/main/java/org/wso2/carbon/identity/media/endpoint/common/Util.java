@@ -17,15 +17,14 @@
 package org.wso2.carbon.identity.media.endpoint.common;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.MDC;
-import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.media.core.StorageSystemManager;
 import org.wso2.carbon.identity.media.endpoint.Error;
 import org.wso2.carbon.identity.media.endpoint.exception.MediaEndpointException;
@@ -34,7 +33,6 @@ import java.net.URI;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
 
-import static org.wso2.carbon.identity.core.util.IdentityCoreConstants.TENANT_NAME_FROM_CONTEXT;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.CORRELATION_ID_MDC;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.MEDIA_API_PATH_COMPONENT;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.TENANT_CONTEXT_PATH_COMPONENT;
@@ -46,6 +44,10 @@ import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstan
 public class Util {
 
     private static final Log LOG = LogFactory.getLog(Util.class);
+
+    private Util() {
+
+    }
 
     /**
      * Get the storage system manager.
@@ -161,9 +163,9 @@ public class Util {
      */
     public static String getTenantDomainFromContext() {
 
-        String tenantDomain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
-        if (IdentityUtil.threadLocalProperties.get().get(TENANT_NAME_FROM_CONTEXT) != null) {
-            tenantDomain = (String) IdentityUtil.threadLocalProperties.get().get(TENANT_NAME_FROM_CONTEXT);
+        String tenantDomain = IdentityTenantUtil.getTenantDomainFromContext();
+        if (StringUtils.isBlank(tenantDomain)) {
+            tenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
         }
         return tenantDomain;
     }
