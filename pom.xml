@@ -212,6 +212,11 @@
                 <artifactId>json-simple</artifactId>
                 <version>${json-simple.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.identity.media</groupId>
+                <artifactId>org.wso2.carbon.identity.media.core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!--Test Dependencies-->
             <dependency>
                 <groupId>org.powermock</groupId>
@@ -330,7 +335,7 @@
         <carbon.kernel.version>4.5.0</carbon.kernel.version>
         <carbon.kernel.feature.version>4.5.0</carbon.kernel.feature.version>
         <identity.media.core.exp.pkg.version>${project.version}</identity.media.core.exp.pkg.version>
-        <carbon.identity.framework.version>5.15.21</carbon.identity.framework.version>
+        <carbon.identity.framework.version>5.17.66</carbon.identity.framework.version>
         <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 6.0.0)
         </carbon.identity.framework.imp.pkg.version.range>
         <org.wso2.carbon.identity.media.core.imp.pkg.version.range>[2.0.0,3.0.0)</org.wso2.carbon.identity.media.core.imp.pkg.version.range>

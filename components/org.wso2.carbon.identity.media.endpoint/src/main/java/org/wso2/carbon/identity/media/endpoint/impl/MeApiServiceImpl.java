@@ -17,17 +17,26 @@
 package org.wso2.carbon.identity.media.endpoint.impl;
 
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.wso2.carbon.identity.media.endpoint.MeApiService;
 import org.wso2.carbon.identity.media.endpoint.Metadata;
+import org.wso2.carbon.identity.media.endpoint.service.MediaService;
 
 import java.io.InputStream;
 import java.util.List;
 import javax.ws.rs.core.Response;
 
+import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.CONTENT_PATH_COMPONENT;
+import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.PUBLIC_PATH_COMPONENT;
+import static org.wso2.carbon.identity.media.endpoint.common.Util.getResourceLocation;
+
 /**
- * Provides service implementation for media service end-user specific operation..
+ * Provides service implementation for media service end-user specific operation.
  */
 public class MeApiServiceImpl implements MeApiService {
+
+    @Autowired
+    private MediaService mediaService;
 
     @Override
     public Response deleteMedia(String type, String id) {
@@ -45,6 +54,20 @@ public class MeApiServiceImpl implements MeApiService {
     public Response uploadMedia(String type, List<InputStream> filesInputStream, List<Attachment> filesDetail,
                                 Metadata metadata) {
 
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        mediaService.validateMediaType(type, filesDetail.get(0).getContentType());
+        // Only single file upload will be supported in the first phase of the implementation.
+        if (filesInputStream.size() > 1) {
+            return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        } else {
+            String uuid = mediaService.uploadMedia(filesInputStream, filesDetail, metadata);
+
+            String mediaAccessLevel;
+            if (metadata != null && metadata.getSecurity() != null && metadata.getSecurity().getAllowedAll()) {
+                mediaAccessLevel = PUBLIC_PATH_COMPONENT;
+            } else {
+                mediaAccessLevel = CONTENT_PATH_COMPONENT;
+            }
+            return Response.created(getResourceLocation(uuid, type, mediaAccessLevel)).build();
+        }
     }
 }
