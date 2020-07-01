@@ -16,12 +16,16 @@
 
 package org.wso2.carbon.identity.media.endpoint.service;
 
+import org.apache.axis2.transport.http.HTTPConstants;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.wso2.carbon.identity.media.core.DataContent;
+import org.wso2.carbon.identity.media.core.FileContent;
 import org.wso2.carbon.identity.media.core.StorageSystemManager;
+import org.wso2.carbon.identity.media.core.StreamContent;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
 import org.wso2.carbon.identity.media.core.model.FileSecurity;
 import org.wso2.carbon.identity.media.core.model.MediaMetadata;
@@ -38,6 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -171,7 +176,7 @@ public class MediaService {
      * @param mediaTypePathParam The media type available as a path parameter in the upload request.
      * @param mediaType          The content type of the uploaded media.
      */
-    public void validateMediaType(String mediaTypePathParam, MediaType mediaType) {
+    public void validateFileUploadMediaTypes(String mediaTypePathParam, MediaType mediaType) {
 
         if (!StringUtils.equals(mediaTypePathParam, mediaType.getType())) {
             throw handleException(Response.Status.FORBIDDEN,
@@ -237,6 +242,76 @@ public class MediaService {
             throw handleException(e, errorMessage, LOG, status, MEDIA_PROPERTIES_FILE_NAME);
         }
         return null;
+    }
+
+    /**
+     * Download requested media file.
+     *
+     * @param type       The high level content-type of the resource (if media content-type is image/png then
+     *                   type would be image).
+     * @param id         Unique identifier for the requested media.
+     * @param identifier File identifier.
+     * @return requested media file.
+     */
+    public Response downloadMediaFile(String type, String id, String identifier) {
+
+        // Retrieving a sub-representation of a media is not supported during the first phase of the implementation.
+        if (StringUtils.isNotBlank(identifier)) {
+            return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        }
+
+        validateAllowedMediaTypes(type);
+
+        DataContent resource = downloadMedia(type, id);
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setMaxAge(86400);
+        cacheControl.setPrivate(true);
+
+        if (resource instanceof FileContent) {
+            return Response.ok(((FileContent) resource).getFile()).header(HTTPConstants.HEADER_CONTENT_TYPE,
+                    ((FileContent) resource).getResponseContentType()).cacheControl(cacheControl).build();
+        } else if (resource instanceof StreamContent) {
+            return Response.ok().entity(((StreamContent) resource).getInputStream()).header(
+                    HTTPConstants.HEADER_CONTENT_TYPE, ((StreamContent) resource).getResponseContentType())
+                    .cacheControl(cacheControl).build();
+        }
+        MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage
+                .ERROR_CODE_ERROR_DOWNLOADING_MEDIA;
+        Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
+        throw handleException(status, errorMessage, id);
+    }
+
+    private DataContent downloadMedia(String type, String id) {
+
+        StorageSystemManager storageSystemManager = getStorageSystemManager();
+        String tenantDomain = getTenantDomainFromContext();
+        try {
+            DataContent dataContent = storageSystemManager.readContent(id, tenantDomain, type);
+            if (dataContent == null) {
+                throw handleException(Response.Status.NOT_FOUND,
+                        MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DOWNLOADING_MEDIA_FILE_NOT_FOUND, id);
+            }
+            return dataContent;
+        } catch (StorageSystemException e) {
+            MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
+                    ERROR_CODE_ERROR_DOWNLOADING_MEDIA;
+            Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
+            throw handleException(e, errorMessage, LOG, status, id);
+        }
+    }
+
+    /**
+     * Validate if the media content type present as a path parameter in the request is a supported content type.
+     *
+     * @param mediaTypePathParam The media type available as a path parameter in the request.
+     */
+    private void validateAllowedMediaTypes(String mediaTypePathParam) {
+
+        List<String> allowedContentTypes = loadAllowedContentTypes();
+        if (CollectionUtils.isEmpty(allowedContentTypes) || !allowedContentTypes.contains(mediaTypePathParam)) {
+            throw handleException(Response.Status.FORBIDDEN,
+                    MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UNSUPPORTED_CONTENT_TYPE_PATH_PARAM);
+        }
     }
 
 }

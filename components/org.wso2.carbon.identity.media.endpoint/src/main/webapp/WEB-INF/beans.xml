@@ -26,6 +26,10 @@
     <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer"/>
     <bean class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer"/>
 
+    <bean id="mediaServiceHolderBean" class="org.wso2.carbon.identity.media.endpoint.common.MediaEndpointDataHolder">
+        <property name="realmService" ref="realmServiceFactoryBean"/>
+    </bean>
+    <bean id="realmServiceFactoryBean" class="org.wso2.carbon.identity.media.endpoint.common.factory.RealmServiceFactory"/>
     <bean class="org.wso2.carbon.identity.media.endpoint.impl.ContentApiServiceImpl"/>
     <bean class="org.wso2.carbon.identity.media.endpoint.impl.MeApiServiceImpl"/>
     <bean class="org.wso2.carbon.identity.media.endpoint.impl.PublicApiServiceImpl"/>

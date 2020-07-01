@@ -16,7 +16,9 @@
 
 package org.wso2.carbon.identity.media.endpoint.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.wso2.carbon.identity.media.endpoint.PublicApiService;
+import org.wso2.carbon.identity.media.endpoint.service.MediaService;
 
 import javax.ws.rs.core.Response;
 
@@ -25,9 +27,12 @@ import javax.ws.rs.core.Response;
  */
 public class PublicApiServiceImpl implements PublicApiService {
 
+    @Autowired
+    private MediaService mediaService;
+
     @Override
     public Response downloadPublicMedia(String type, String id, String identifier) {
 
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        return mediaService.downloadMediaFile(type, id, identifier);
     }
 }

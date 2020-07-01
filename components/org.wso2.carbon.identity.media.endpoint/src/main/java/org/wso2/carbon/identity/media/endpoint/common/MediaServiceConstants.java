@@ -55,6 +55,8 @@ public class MediaServiceConstants {
                 " media information.", "File with id: %s not found."),
         ERROR_CODE_ERROR_DELETING_MEDIA_FILE_NOT_FOUND("60006", "Unable to delete the requested media.",
                 "File with id: %s not found."),
+        ERROR_CODE_ERROR_UNSUPPORTED_CONTENT_TYPE_PATH_PARAM("60007", "Unable to perform the requested media" +
+                " operation.", "Unsupported file content type available as a path parameter in the request."),
 
         // Server errors.
         ERROR_CODE_ERROR_UPLOADING_MEDIA("65001", "Unable to upload the provided media.",
@@ -63,7 +65,7 @@ public class MediaServiceConstants {
                 " requested media.", "Server encountered an error while evaluating security access to the media" +
                 " with id: %s"),
         ERROR_CODE_ERROR_DOWNLOADING_MEDIA("65003", "Unable to download the requested media.",
-                "Server encountered an error while downloading the media."),
+                "Server encountered an error while downloading the media with id: %s"),
         ERROR_CODE_ERROR_EVALUATING_MEDIA_MANAGEMENT_SECURITY("65004", "Unable to evaluate media management" +
                 " security", "Server encountered an error while evaluating media management security."),
         ERROR_CODE_ERROR_DELETING_MEDIA("65005", "Unable to delete the requested media.",
