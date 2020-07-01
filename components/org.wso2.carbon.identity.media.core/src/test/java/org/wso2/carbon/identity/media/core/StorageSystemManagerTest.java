@@ -55,6 +55,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
     private MediaServiceDataHolder mediaServiceDataHolder;
     private StorageSystemFactory fileBasedStorageSystemFactory;
     private StorageSystemFactory databaseBasedStorageSystemFactory;
+    private String storeType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
 
     @BeforeTest
     public void setUp() {
@@ -70,58 +71,6 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         mediaServiceDataHolder.getStorageSystemFactories()
                 .put("org.wso2.carbon.identity.media.jdbc" + ".DatabaseBasedStorageSystemImpl",
                         databaseBasedStorageSystemFactory);
-    }
-
-    @Test
-    public void testReadFileBasedStorageTypeFromConfig() throws Exception {
-
-        final String storeType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
-        mockStatic(IdentityUtil.class);
-        when(IdentityUtil.getProperty("ContentStore.Type")).thenReturn(storeType);
-        Assert.assertEquals(Whitebox.invokeMethod(storageSystemManager, "readStorageTypeFromConfig"), storeType);
-
-    }
-
-    @Test
-    public void testReadDatabaseBasedStorageTypeFromConfig() throws Exception {
-
-        final String storeType = "org.wso2.carbon.identity.media.jdbc.DatabaseBasedStorageSystemImpl";
-        mockStatic(IdentityUtil.class);
-        when(IdentityUtil.getProperty("ContentStore.Type")).thenReturn(storeType);
-        Assert.assertEquals(Whitebox.invokeMethod(storageSystemManager, "readStorageTypeFromConfig"), storeType);
-
-    }
-
-    @Test
-    public void testReadCustomStorageTypeFromConfig() throws Exception {
-
-        final String storeType = "org.wso2.carbon.identity.image.custom.CustomStorageSystemImpl";
-        mockStatic(IdentityUtil.class);
-        when(IdentityUtil.getProperty("ContentStore.Type")).thenReturn(storeType);
-        Assert.assertEquals(Whitebox.invokeMethod(storageSystemManager, "readStorageTypeFromConfig"), storeType);
-
-    }
-
-    @Test
-    public void testReadEmptyStorageTypeFromConfig() throws Exception {
-
-        final String storeType = "";
-        final String defaultStoreType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
-        mockStatic(IdentityUtil.class);
-        when(IdentityUtil.getProperty("ContentStore.Type")).thenReturn(storeType);
-        Assert.assertEquals(Whitebox.invokeMethod(storageSystemManager, "readStorageTypeFromConfig"), defaultStoreType);
-
-    }
-
-    @Test
-    public void testReadNullStorageTypeFromConfig() throws Exception {
-
-        final String storeType = null;
-        final String defaultStoreType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
-        mockStatic(IdentityUtil.class);
-        when(IdentityUtil.getProperty("ContentStore.Type")).thenReturn(storeType);
-        Assert.assertEquals(Whitebox.invokeMethod(storageSystemManager, "readStorageTypeFromConfig"), defaultStoreType);
-
     }
 
     @Test
@@ -192,7 +141,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         String tevaTestFolder = new File(tevaUrl.toURI()).getAbsolutePath();
         System.setProperty("upload.location", tevaTestFolder);
 
-        String url = storageSystemManager.addFile(inputStreams, mediaMetadata, tenantDomain);
+        String url = storageSystemManager.addFile(inputStreams, mediaMetadata, tenantDomain, storeType);
         Assert.assertEquals(url, mockUUID);
 
     }
@@ -210,7 +159,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         inputStreams.add(inputStream);
         MediaMetadata mediaMetadata = mock(MediaMetadata.class);
         String tenantDomain = "carbon.super";
-        Assert.assertEquals(storageSystemManager.addFile(inputStreams, mediaMetadata, tenantDomain), "");
+        Assert.assertEquals(storageSystemManager.addFile(inputStreams, mediaMetadata, tenantDomain, storeType), "");
 
     }
 
@@ -229,7 +178,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         String id = "imageuuid";
         String type = "idp";
         String tenantDomain = "carbon.super";
-        Assert.assertEquals(storageSystemManager.readContent(id, type, tenantDomain), fileContent);
+        Assert.assertEquals(storageSystemManager.readContent(id, type, tenantDomain, storeType), fileContent);
     }
 
 }

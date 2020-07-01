@@ -28,8 +28,14 @@ import org.wso2.carbon.identity.media.core.StorageSystemManager;
 import org.wso2.carbon.identity.media.core.StreamContent;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
 import org.wso2.carbon.identity.media.core.model.FileSecurity;
+import org.wso2.carbon.identity.media.core.model.MediaInformation;
+import org.wso2.carbon.identity.media.core.model.MediaInformationMetadata;
 import org.wso2.carbon.identity.media.core.model.MediaMetadata;
+import org.wso2.carbon.identity.media.endpoint.MediaInformationResponse;
+import org.wso2.carbon.identity.media.endpoint.MediaInformationResponseMetadata;
 import org.wso2.carbon.identity.media.endpoint.Metadata;
+import org.wso2.carbon.identity.media.endpoint.PrivilegedUserMediaInformationResponse;
+import org.wso2.carbon.identity.media.endpoint.PrivilegedUserMediaInformationResponseMetadata;
 import org.wso2.carbon.identity.media.endpoint.PrivilegedUserMetadata;
 import org.wso2.carbon.identity.media.endpoint.PrivilegedUserSecurity;
 import org.wso2.carbon.identity.media.endpoint.Security;
@@ -49,6 +55,7 @@ import javax.ws.rs.core.Response;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.ALLOWED_CONTENT_SUB_TYPES;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.ALLOWED_CONTENT_TYPES;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.MEDIA_PROPERTIES_FILE_NAME;
+import static org.wso2.carbon.identity.media.endpoint.common.Util.getMediaStoreType;
 import static org.wso2.carbon.identity.media.endpoint.common.Util.getStorageSystemManager;
 import static org.wso2.carbon.identity.media.endpoint.common.Util.getTenantDomainFromContext;
 import static org.wso2.carbon.identity.media.endpoint.common.Util.getUsernameFromContext;
@@ -115,7 +122,8 @@ public class MediaService {
         StorageSystemManager storageSystemManager = getStorageSystemManager();
         String tenantDomain = getTenantDomainFromContext();
         try {
-            String uuid = storageSystemManager.addFile(filesInputStream, mediaMetadata, tenantDomain);
+            String mediaStoreType = getMediaStoreType();
+            String uuid = storageSystemManager.addFile(filesInputStream, mediaMetadata, tenantDomain, mediaStoreType);
             if (StringUtils.isNotBlank(uuid)) {
                 return uuid;
             }
@@ -285,8 +293,9 @@ public class MediaService {
 
         StorageSystemManager storageSystemManager = getStorageSystemManager();
         String tenantDomain = getTenantDomainFromContext();
+        String mediaStoreType = getMediaStoreType();
         try {
-            DataContent dataContent = storageSystemManager.readContent(id, tenantDomain, type);
+            DataContent dataContent = storageSystemManager.readContent(id, tenantDomain, type, mediaStoreType);
             if (dataContent == null) {
                 throw handleException(Response.Status.NOT_FOUND,
                         MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DOWNLOADING_MEDIA_FILE_NOT_FOUND, id);
@@ -312,6 +321,136 @@ public class MediaService {
             throw handleException(Response.Status.FORBIDDEN,
                     MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UNSUPPORTED_CONTENT_TYPE_PATH_PARAM);
         }
+    }
+
+    /**
+     * Delete a media.
+     *
+     * @param type The high level content-type of the resource (if media content-type is image/png then
+     *             type would be image.
+     * @param id   Unique identifier for the requested media file to be deleted.
+     */
+    public void deleteMedia(String type, String id) {
+
+        validateAllowedMediaTypes(type);
+        StorageSystemManager storageSystemManager = getStorageSystemManager();
+        String tenantDomain = getTenantDomainFromContext();
+        String mediaStoreType = getMediaStoreType();
+        try {
+            boolean mediaDeleted = storageSystemManager.isMediaDeleted(id, type, tenantDomain, mediaStoreType);
+            if (!mediaDeleted) {
+                throw handleException(Response.Status.NOT_FOUND,
+                        MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DELETING_MEDIA_FILE_NOT_FOUND, id, type);
+            }
+        } catch (StorageSystemException e) {
+            MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
+                    ERROR_CODE_ERROR_DELETING_MEDIA;
+            Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
+            throw handleException(e, errorMessage, LOG, status, id);
+        }
+    }
+
+    /**
+     * Get media information for media requested by a privileged user.
+     *
+     * @param type The high level content-type of the resource (if media content-type is image/png then
+     *             type would be image.
+     * @param id   Unique identifier for the requested media.
+     * @return MediaInformationResponse The media information object.
+     */
+    public PrivilegedUserMediaInformationResponse getMediaInformationForPrivilegedUser(String type, String id) {
+
+        validateAllowedMediaTypes(type);
+        StorageSystemManager storageSystemManager = getStorageSystemManager();
+        String tenantDomain = getTenantDomainFromContext();
+        String mediaStoreType = getMediaStoreType();
+        PrivilegedUserMediaInformationResponse privilegedUserMediaInformationResponse =
+                new PrivilegedUserMediaInformationResponse();
+        PrivilegedUserMediaInformationResponseMetadata privilegedUserMediaInformationResponseMetadata =
+                new PrivilegedUserMediaInformationResponseMetadata();
+        PrivilegedUserSecurity privilegedUserSecurity = new PrivilegedUserSecurity();
+        try {
+            MediaInformation mediaInformation = storageSystemManager.retrieveMediaInformation(id, type, tenantDomain,
+                    mediaStoreType);
+            if (mediaInformation == null) {
+                throw handleException(Response.Status.NOT_FOUND,
+                        MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION_FILE_NOT_FOUND,
+                        id);
+            }
+
+            MediaInformationMetadata mediaInformationMetadata = mediaInformation.getMediaInformationResponseMetadata();
+
+            if (mediaInformationMetadata != null) {
+                FileSecurity fileSecurity = mediaInformationMetadata.getSecurity();
+                if (fileSecurity != null) {
+                    if (fileSecurity.isAllowedAll()) {
+                        privilegedUserSecurity.setAllowedAll(true);
+                    } else {
+                        privilegedUserSecurity.setAllowedAll(false);
+                        privilegedUserSecurity.setAllowedUsers(fileSecurity.getAllowedUsers());
+                    }
+                    privilegedUserMediaInformationResponseMetadata.setSecurity(privilegedUserSecurity);
+                }
+                privilegedUserMediaInformationResponseMetadata.setTag(mediaInformationMetadata.getTag());
+            }
+
+            privilegedUserMediaInformationResponse.setLinks(mediaInformation.getLinks());
+            privilegedUserMediaInformationResponse.setMetadata(privilegedUserMediaInformationResponseMetadata);
+        } catch (StorageSystemException e) {
+            MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
+                    ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION;
+            Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
+            throw handleException(e, errorMessage, LOG, status, id);
+        }
+        return privilegedUserMediaInformationResponse;
+    }
+
+    /**
+     * Get media information for media requested by a privileged user.
+     *
+     * @param type The high level content-type of the resource (if media content-type is image/png then
+     *             type would be image.
+     * @param id   Unique identifier for the requested media.
+     * @return MediaInformationResponse The media information object.
+     */
+    public MediaInformationResponse getMediaInformation(String type, String id) {
+
+        validateAllowedMediaTypes(type);
+        StorageSystemManager storageSystemManager = getStorageSystemManager();
+        String tenantDomain = getTenantDomainFromContext();
+        String mediaStoreType = getMediaStoreType();
+        MediaInformationResponse mediaInformationResponse = new MediaInformationResponse();
+        MediaInformationResponseMetadata mediaInformationResponseMetadata = new MediaInformationResponseMetadata();
+        Security security = new Security();
+        try {
+            MediaInformation mediaInformation = storageSystemManager.retrieveMediaInformation(id, type, tenantDomain,
+                    mediaStoreType);
+            if (mediaInformation == null) {
+                throw handleException(Response.Status.NOT_FOUND,
+                        MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION_FILE_NOT_FOUND,
+                        id);
+            }
+
+            MediaInformationMetadata mediaInformationMetadata = mediaInformation.getMediaInformationResponseMetadata();
+
+            if (mediaInformationMetadata != null) {
+                FileSecurity fileSecurity = mediaInformationMetadata.getSecurity();
+                if (fileSecurity != null) {
+                    security.setAllowedAll(fileSecurity.isAllowedAll());
+                    mediaInformationResponseMetadata.setSecurity(security);
+                }
+                mediaInformationResponseMetadata.setTag(mediaInformationMetadata.getTag());
+            }
+
+            mediaInformationResponse.setLinks(mediaInformation.getLinks());
+            mediaInformationResponse.setMetadata(mediaInformationResponseMetadata);
+        } catch (StorageSystemException e) {
+            MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
+                    ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION;
+            Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
+            throw handleException(e, errorMessage, LOG, status, id);
+        }
+        return mediaInformationResponse;
     }
 
 }

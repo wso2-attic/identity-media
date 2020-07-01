@@ -29,6 +29,9 @@ public class MediaServiceConstants {
     static final String V1_API_PATH_COMPONENT = "/v1.0";
     static final String CORRELATION_ID_MDC = "Correlation-ID";
     static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
+    static final String MEDIA_STORE_TYPE = "MediaStoreType";
+    static final String DEFAULT_MEDIA_STORE_TYPE_VALUE =
+            "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
     public static final String CONTENT_PATH_COMPONENT = "content";
     public static final String PUBLIC_PATH_COMPONENT = "public";
     public static final String ME_PATH_COMPONENT = "me";
@@ -54,7 +57,7 @@ public class MediaServiceConstants {
         ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION_FILE_NOT_FOUND("60005", "Unable to retrieve the requested" +
                 " media information.", "File with id: %s not found."),
         ERROR_CODE_ERROR_DELETING_MEDIA_FILE_NOT_FOUND("60006", "Unable to delete the requested media.",
-                "File with id: %s not found."),
+                "File with id: %s not found for media type: %s"),
         ERROR_CODE_ERROR_UNSUPPORTED_CONTENT_TYPE_PATH_PARAM("60007", "Unable to perform the requested media" +
                 " operation.", "Unsupported file content type available as a path parameter in the request."),
 
@@ -69,9 +72,9 @@ public class MediaServiceConstants {
         ERROR_CODE_ERROR_EVALUATING_MEDIA_MANAGEMENT_SECURITY("65004", "Unable to evaluate media management" +
                 " security", "Server encountered an error while evaluating media management security."),
         ERROR_CODE_ERROR_DELETING_MEDIA("65005", "Unable to delete the requested media.",
-                "Server encountered an error while deleting the media."),
+                "Server encountered an error while deleting the media with id: %s"),
         ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION("65006", "Unable to retrieve the requested media information.",
-                "Server encountered an error while retrieving the media information."),
+                "Server encountered an error while retrieving the information for media with id: %s"),
         ERROR_CODE_ERROR_LOADING_ALLOWED_CONTENT_TYPES("65007", "Unable to retrieve allowed content types.",
                 "Server encountered an error while loading %s file."),
         ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL("65008", "Unable to build uploaded media location URL.",
