@@ -55,7 +55,6 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
     private MediaServiceDataHolder mediaServiceDataHolder;
     private StorageSystemFactory fileBasedStorageSystemFactory;
     private StorageSystemFactory databaseBasedStorageSystemFactory;
-    private String storeType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
 
     @BeforeTest
     public void setUp() {
@@ -117,6 +116,8 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         mockStatic(StorageSystemUtil.class);
         String mockUUID = "30d0325e-40bc-45f3-845e-f13dd130e963";
         when(StorageSystemUtil.calculateUUID()).thenReturn(mockUUID);
+        String mockstoreType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(mockstoreType);
 
         ClassLoader classLoader = getClass().getClassLoader();
         File mediaFile = new File(classLoader.getResource("profilepic.png").getFile());
@@ -141,7 +142,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         String tevaTestFolder = new File(tevaUrl.toURI()).getAbsolutePath();
         System.setProperty("upload.location", tevaTestFolder);
 
-        String url = storageSystemManager.addFile(inputStreams, mediaMetadata, tenantDomain, storeType);
+        String url = storageSystemManager.addFile(inputStreams, mediaMetadata, tenantDomain);
         Assert.assertEquals(url, mockUUID);
 
     }
@@ -159,7 +160,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         inputStreams.add(inputStream);
         MediaMetadata mediaMetadata = mock(MediaMetadata.class);
         String tenantDomain = "carbon.super";
-        Assert.assertEquals(storageSystemManager.addFile(inputStreams, mediaMetadata, tenantDomain, storeType), "");
+        Assert.assertEquals(storageSystemManager.addFile(inputStreams, mediaMetadata, tenantDomain), "");
 
     }
 
@@ -171,6 +172,10 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
         when(fileBasedStorageSystemFactory.getInstance()).thenReturn(fileBasedStorageSystem);
 
+        mockStatic(StorageSystemUtil.class);
+        String mockstoreType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(mockstoreType);
+
         File file = new File("Dummy path");
         FileContentImpl fileContent = new FileContentImpl(file);
 
@@ -178,7 +183,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         String id = "imageuuid";
         String type = "idp";
         String tenantDomain = "carbon.super";
-        Assert.assertEquals(storageSystemManager.readContent(id, type, tenantDomain, storeType), fileContent);
+        Assert.assertEquals(storageSystemManager.readContent(id, type, tenantDomain), fileContent);
     }
 
 }

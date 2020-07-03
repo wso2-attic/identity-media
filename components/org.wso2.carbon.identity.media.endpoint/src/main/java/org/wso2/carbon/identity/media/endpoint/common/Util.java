@@ -29,18 +29,12 @@ import org.wso2.carbon.identity.media.core.StorageSystemManager;
 import org.wso2.carbon.identity.media.endpoint.Error;
 import org.wso2.carbon.identity.media.endpoint.exception.MediaEndpointException;
 
-import java.io.IOException;
 import java.net.URI;
-import java.util.Objects;
-import java.util.Properties;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
 
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.CORRELATION_ID_MDC;
-import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.DEFAULT_MEDIA_STORE_TYPE_VALUE;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.MEDIA_API_PATH_COMPONENT;
-import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.MEDIA_PROPERTIES_FILE_NAME;
-import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.MEDIA_STORE_TYPE;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.TENANT_CONTEXT_PATH_COMPONENT;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.V1_API_PATH_COMPONENT;
 
@@ -236,39 +230,6 @@ public class Util {
                     MEDIA_API_PATH_COMPONENT + endpoint;
         }
         return context;
-    }
-
-    /**
-     * Read media store type defined in media.properties file.
-     *
-     * @return media store type.
-     */
-    public static String getMediaStoreType() {
-
-        Properties properties = new Properties();
-        try {
-            ClassLoader classLoader = Util.class.getClassLoader();
-            if (classLoader != null) {
-                properties.load(Objects.requireNonNull(classLoader.getResourceAsStream(MEDIA_PROPERTIES_FILE_NAME)));
-                String mediaStoreType = properties.getProperty(MEDIA_STORE_TYPE);
-                if (StringUtils.isNotBlank(mediaStoreType)) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug(String.format("The configured media store type is %s.", mediaStoreType));
-                    }
-                    return mediaStoreType;
-                }
-            }
-        } catch (IOException e) {
-            MediaServiceConstants.ErrorMessage errorMessage =
-                    MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_LOADING_ALLOWED_CONTENT_TYPES;
-            Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
-            throw handleException(e, errorMessage, LOG, status, MEDIA_PROPERTIES_FILE_NAME);
-        }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("MediaStoreType is not configured in media.properties file. Hence proceeding with the " +
-                    "default value.");
-        }
-        return DEFAULT_MEDIA_STORE_TYPE_VALUE;
     }
 
 }

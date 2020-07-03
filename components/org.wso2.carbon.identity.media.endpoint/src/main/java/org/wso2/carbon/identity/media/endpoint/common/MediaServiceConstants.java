@@ -29,15 +29,9 @@ public class MediaServiceConstants {
     static final String V1_API_PATH_COMPONENT = "/v1.0";
     static final String CORRELATION_ID_MDC = "Correlation-ID";
     static final String TENANT_CONTEXT_PATH_COMPONENT = "/t/%s";
-    static final String MEDIA_STORE_TYPE = "MediaStoreType";
-    static final String DEFAULT_MEDIA_STORE_TYPE_VALUE =
-            "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
     public static final String CONTENT_PATH_COMPONENT = "content";
     public static final String PUBLIC_PATH_COMPONENT = "public";
     public static final String ME_PATH_COMPONENT = "me";
-    public static final String MEDIA_PROPERTIES_FILE_NAME = "media.properties";
-    public static final String ALLOWED_CONTENT_TYPES = "AllowedContentTypes";
-    public static final String ALLOWED_CONTENT_SUB_TYPES = ".AllowedContentSubTypes";
     private static final String MEDIA_SERVICE = "MED-";
 
     /**
@@ -75,9 +69,7 @@ public class MediaServiceConstants {
                 "Server encountered an error while deleting the media with id: %s"),
         ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION("65006", "Unable to retrieve the requested media information.",
                 "Server encountered an error while retrieving the information for media with id: %s"),
-        ERROR_CODE_ERROR_LOADING_ALLOWED_CONTENT_TYPES("65007", "Unable to retrieve allowed content types.",
-                "Server encountered an error while loading %s file."),
-        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL("65008", "Unable to build uploaded media location URL.",
+        ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL("65007", "Unable to build uploaded media location URL.",
                 "Server encountered an error while building URL for response header.");
 
         private final String code;

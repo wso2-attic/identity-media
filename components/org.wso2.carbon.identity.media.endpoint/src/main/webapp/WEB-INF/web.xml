@@ -29,10 +29,6 @@
         <param-name>contextConfigLocation</param-name>
         <param-value>WEB-INF/beans.xml</param-value>
     </context-param>
-    <context-param>
-        <param-name>property-file</param-name>
-        <param-value>media.properties</param-value>
-    </context-param>
 
     <listener>
         <listener-class>

@@ -31,6 +31,7 @@ import org.wso2.carbon.identity.media.core.StorageSystemFactory;
 import org.wso2.carbon.identity.media.core.StorageSystemManager;
 import org.wso2.carbon.identity.media.core.file.FileBasedStorageSystemFactory;
 import org.wso2.carbon.identity.media.core.jdbc.DatabaseBasedStorageSystemFactory;
+import org.wso2.carbon.identity.media.core.util.StorageSystemUtil;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -52,6 +53,9 @@ public class MediaServiceComponent {
         StorageSystemFactory dbBasedStorageSystemFactory = new DatabaseBasedStorageSystemFactory();
         bundleContext.registerService(StorageSystemFactory.class.getName(), dbBasedStorageSystemFactory, null);
         bundleContext.registerService(StorageSystemManager.class, new StorageSystemManager(), null);
+
+        // Load configurations from media.properties file into memory.
+        StorageSystemUtil.loadMediaProperties();
     }
 
     @Deactivate

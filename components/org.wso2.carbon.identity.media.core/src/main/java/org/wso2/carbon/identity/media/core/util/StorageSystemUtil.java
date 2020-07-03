@@ -15,15 +15,82 @@
  */
 package org.wso2.carbon.identity.media.core.util;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.UUID;
+
+import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.ALLOWED_CONTENT_SUB_TYPES;
+import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.ALLOWED_CONTENT_TYPES;
+import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.DEFAULT_MEDIA_STORE_TYPE_VALUE;
+import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.MEDIA_PROPERTIES_FILE;
+import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.MEDIA_STORE_TYPE;
 
 /**
  * Util class to provide commonly used methods within the component.
  */
 public class StorageSystemUtil {
 
+    private static final Log LOGGER = LogFactory.getLog(StorageSystemUtil.class);
+
+    private static String mediaStorageType;
+    private static HashMap<String, List<String>> contentTypes = new HashMap<>();
+
     public static String calculateUUID() {
 
         return UUID.randomUUID().toString();
+    }
+
+    public static String getMediaStoreType() {
+
+        return mediaStorageType;
+    }
+
+    public static HashMap<String, List<String>> getContentTypes() {
+
+        return contentTypes;
+    }
+
+    /**
+     * Read media store type defined in media.properties file.
+     */
+    public static void loadMediaProperties() {
+
+        Properties properties = new Properties();
+        try {
+            ClassLoader classLoader = StorageSystemUtil.class.getClassLoader();
+            if (classLoader != null) {
+                properties.load(Objects.requireNonNull(classLoader.getResourceAsStream(MEDIA_PROPERTIES_FILE)));
+
+                String mediaStoreTypeConfig = properties.getProperty(MEDIA_STORE_TYPE);
+                if (StringUtils.isNotBlank(mediaStoreTypeConfig)) {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(String.format("The configured media store type is %s.", mediaStoreTypeConfig));
+                    }
+                    mediaStorageType = mediaStoreTypeConfig;
+                } else {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("MediaStoreType is not configured in media.properties file. Hence proceeding" +
+                                " with the default value: " + DEFAULT_MEDIA_STORE_TYPE_VALUE);
+                    }
+                    mediaStorageType = DEFAULT_MEDIA_STORE_TYPE_VALUE;
+                }
+
+                String[] allowedContentTypes = properties.getProperty(ALLOWED_CONTENT_TYPES).split(",");
+                for (String contentType : allowedContentTypes) {
+                    contentTypes.put(contentType, Arrays.asList(properties.getProperty(contentType +
+                            ALLOWED_CONTENT_SUB_TYPES).split(",")));
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Error while loading media.properties file.", e);
+        }
     }
 }

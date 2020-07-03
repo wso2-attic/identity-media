@@ -44,7 +44,6 @@ import javax.ws.rs.core.Response;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.CONTENT_PATH_COMPONENT;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.ME_PATH_COMPONENT;
 import static org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants.PUBLIC_PATH_COMPONENT;
-import static org.wso2.carbon.identity.media.endpoint.common.Util.getMediaStoreType;
 import static org.wso2.carbon.identity.media.endpoint.common.Util.getStorageSystemManager;
 import static org.wso2.carbon.identity.media.endpoint.common.Util.getTenantDomainFromContext;
 import static org.wso2.carbon.identity.media.endpoint.common.Util.handleException;
@@ -83,8 +82,7 @@ public class AuthorizationFilter implements ContainerRequestFilter {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Evaluating whether media download is publicly allowed.");
                     }
-                    isUserAuthorized = storageSystemManager.isDownloadAllowedForPublicMedia(uuid, type, tenantDomain,
-                            getMediaStoreType());
+                    isUserAuthorized = storageSystemManager.isDownloadAllowedForPublicMedia(uuid, type, tenantDomain);
                     if (!isUserAuthorized) {
                         Response response = Response.status(HttpServletResponse.SC_UNAUTHORIZED).build();
                         containerRequestContext.abortWith(response);
@@ -115,7 +113,7 @@ public class AuthorizationFilter implements ContainerRequestFilter {
 
                     if (!isUserAuthorized) {
                         isUserAuthorized = storageSystemManager.isDownloadAllowedForProtectedMedia(uuid, type,
-                                tenantDomain, getMediaStoreType());
+                                tenantDomain);
                     }
 
                     if (!isUserAuthorized) {
@@ -152,7 +150,7 @@ public class AuthorizationFilter implements ContainerRequestFilter {
                                 httpMethod));
                     }
                     isUserAuthorized = storageSystemManager.isMediaManagementAllowedForEndUser(uuid, type,
-                            tenantDomain, getMediaStoreType());
+                            tenantDomain);
                     if (!isUserAuthorized) {
                         Response response = Response.status(HttpServletResponse.SC_UNAUTHORIZED).build();
                         containerRequestContext.abortWith(response);
