@@ -18,8 +18,8 @@ package org.wso2.carbon.identity.media.endpoint.impl;
 
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.wso2.carbon.identity.media.core.model.MediaInformation;
 import org.wso2.carbon.identity.media.endpoint.MeApiService;
-import org.wso2.carbon.identity.media.endpoint.MediaInformationResponse;
 import org.wso2.carbon.identity.media.endpoint.Metadata;
 import org.wso2.carbon.identity.media.endpoint.service.MediaService;
 
@@ -49,8 +49,8 @@ public class MeApiServiceImpl implements MeApiService {
     @Override
     public Response listMediaInformation(String type, String id) {
 
-        MediaInformationResponse mediaInformationResponse = mediaService.getMediaInformation(type, id);
-        return Response.status(Response.Status.OK).entity(mediaInformationResponse).build();
+        MediaInformation mediaInformation = mediaService.getMediaInformation(type, id);
+        return Response.status(Response.Status.OK).entity(mediaInformation).build();
     }
 
     @Override

@@ -17,13 +17,21 @@
 package org.wso2.carbon.identity.media.endpoint;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+import java.io.InputStream;
+import java.util.List;
 
+import org.wso2.carbon.identity.media.endpoint.Error;
 import java.io.File;
+import org.wso2.carbon.identity.media.endpoint.ContentApiService;
 
 import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import io.swagger.annotations.*;
+
+import javax.validation.constraints.*;
 
 @Path("/content")
 @Api(description = "The content API")

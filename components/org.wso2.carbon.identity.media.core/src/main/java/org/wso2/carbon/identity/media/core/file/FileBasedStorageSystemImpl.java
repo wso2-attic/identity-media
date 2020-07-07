@@ -32,7 +32,6 @@ import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
 import org.wso2.carbon.identity.media.core.model.FileSecurity;
 import org.wso2.carbon.identity.media.core.model.MediaFileDownloadData;
 import org.wso2.carbon.identity.media.core.model.MediaInformation;
-import org.wso2.carbon.identity.media.core.model.MediaInformationMetadata;
 import org.wso2.carbon.identity.media.core.model.MediaMetadata;
 
 import java.io.File;
@@ -388,24 +387,12 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     private MediaInformation getMediaInformation(File file, String type, String id) throws IOException, ParseException {
 
         MediaInformation mediaInformation = new MediaInformation();
-        MediaInformationMetadata mediaInformationMetadata = new MediaInformationMetadata();
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
             JSONParser jsonParser = new JSONParser();
             Object metadata = jsonParser.parse(reader);
 
-            String tag = (String) ((JSONObject) metadata).get(MEDIA_TAG);
-            mediaInformationMetadata.setTag(tag);
-
             HashMap fileSecurityMap = (HashMap) ((JSONObject) metadata).get(MEDIA_SECURITY);
             boolean allowedAll = (Boolean) fileSecurityMap.get(MEDIA_SECURITY_ALLOWED_ALL);
-            List<String> allowedUsers = (List<String>) fileSecurityMap.get(MEDIA_SECURITY_ALLOWED_USERS);
-            FileSecurity fileSecurity;
-            if (CollectionUtils.isNotEmpty(allowedUsers)) {
-                fileSecurity = new FileSecurity(allowedAll, allowedUsers);
-            } else {
-                fileSecurity = new FileSecurity(allowedAll);
-            }
-            mediaInformationMetadata.setSecurity(fileSecurity);
 
             ArrayList<String> links = new ArrayList<>();
             String access;
@@ -417,7 +404,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             links.add(String.format("/%s/%s/%s", access, type, id));
             mediaInformation.setLinks(links);
 
-            mediaInformation.setMediaInformationResponseMetadata(mediaInformationMetadata);
+            mediaInformation.setMediaMetadata(metadata);
         }
         return mediaInformation;
     }

@@ -195,7 +195,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PrivilegedUserMediaInformationResponse'
+                $ref: '#/components/schemas/MediaInformationResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -414,40 +414,9 @@ components:
                 example: '/t/carbon.super/api/identity/media/v1.0/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d?identifier=large'
                 description: Location of the uploaded sub resource.
 
-    PrivilegedUserMediaInformationResponse:
-      type: object
-      description: Location(s) of media and metadata.
-      properties:
-        links:
-          $ref: '#/components/schemas/Links'
-        metadata:
-          type: object
-          properties:
-            tag:
-              $ref: '#/components/schemas/Tag'
-            security:
-              $ref: '#/components/schemas/PrivilegedUserSecurity'
-
     MediaInformationResponse:
       type: object
-      description: Location(s) of media and metadata.
-      properties:
-        links:
-          $ref: '#/components/schemas/Links'
-        metadata:
-          type: object
-          properties:
-            tag:
-              $ref: '#/components/schemas/Tag'
-            security:
-              $ref: '#/components/schemas/Security'
-
-    Links:
-      type: array
-      items:
-        type: string
-        description: Location of the media.
-      example: ['/t/carbon.super/api/identity/media/v1.0/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d']
+      description: Metadata and location(s) of media.
 
     DownloadFile:
       type: string

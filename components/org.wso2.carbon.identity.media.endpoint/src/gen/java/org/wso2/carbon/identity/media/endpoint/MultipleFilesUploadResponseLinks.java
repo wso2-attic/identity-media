@@ -17,10 +17,16 @@
 package org.wso2.carbon.identity.media.endpoint;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 
+
+import io.swagger.annotations.*;
 import java.util.Objects;
 import javax.validation.Valid;
+import javax.xml.bind.annotation.*;
 
 public class MultipleFilesUploadResponseLinks  {
   
@@ -54,7 +60,7 @@ public class MultipleFilesUploadResponseLinks  {
         this.href = href;
         return this;
     }
-
+    
     @ApiModelProperty(example = "/t/carbon.super/api/identity/media/v1.0/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d?identifier=large", value = "Location of the uploaded sub resource.")
     @JsonProperty("href")
     @Valid

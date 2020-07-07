@@ -26,7 +26,7 @@ import java.util.List;
 public class MediaInformation {
 
     private List<String> links;
-    private MediaInformationMetadata mediaInformationResponseMetadata;
+    private Object mediaMetadata;
 
     public List<String> getLinks() {
 
@@ -38,13 +38,13 @@ public class MediaInformation {
         this.links = links;
     }
 
-    public MediaInformationMetadata getMediaInformationResponseMetadata() {
+    public Object getMediaMetadata() {
 
-        return mediaInformationResponseMetadata;
+        return mediaMetadata;
     }
 
-    public void setMediaInformationResponseMetadata(MediaInformationMetadata mediaInformationResponseMetadata) {
+    public void setMediaMetadata(Object mediaMetadata) {
 
-        this.mediaInformationResponseMetadata = mediaInformationResponseMetadata;
+        this.mediaMetadata = mediaMetadata;
     }
 }

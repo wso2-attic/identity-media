@@ -22,10 +22,18 @@ import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import java.io.InputStream;
 import java.util.List;
 
+import org.wso2.carbon.identity.media.endpoint.Error;
+import java.io.File;
+import org.wso2.carbon.identity.media.endpoint.Metadata;
+import org.wso2.carbon.identity.media.endpoint.MultipleFilesUploadResponse;
+import org.wso2.carbon.identity.media.endpoint.MeApiService;
+
 import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import io.swagger.annotations.*;
+
+import javax.validation.constraints.*;
 
 @Path("/me")
 @Api(description = "The me API")
@@ -64,14 +72,14 @@ public class MeApi  {
     @Path("/{type}/{id}")
     
     @Produces({ "application/json" })
-    @ApiOperation(value = "An end-user requests media location(s) and associated metadata for the given media id.", notes = "", response = MediaInformationResponse.class, authorizations = {
+    @ApiOperation(value = "An end-user requests media location(s) and associated metadata for the given media id.", notes = "", response = Object.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
         })
     }, tags={ "Get Media Details", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Requested media information retrieved successfully.", response = MediaInformationResponse.class),
+        @ApiResponse(code = 200, message = "Requested media information retrieved successfully.", response = Object.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
