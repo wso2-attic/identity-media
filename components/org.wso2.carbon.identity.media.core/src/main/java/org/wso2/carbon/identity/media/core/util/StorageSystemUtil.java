@@ -18,12 +18,13 @@ package org.wso2.carbon.identity.media.core.util;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -57,40 +58,45 @@ public class StorageSystemUtil {
 
         return contentTypes;
     }
-
     /**
-     * Read media store type defined in media.properties file.
+     * Read media properties defined in media.properties file.
+     *
+     * @throws StorageSystemException Exception related to loading configured media properties from file.
      */
-    public static void loadMediaProperties() {
+    public static void loadMediaProperties() throws StorageSystemException {
 
         Properties properties = new Properties();
-        try {
-            ClassLoader classLoader = StorageSystemUtil.class.getClassLoader();
-            if (classLoader != null) {
-                properties.load(Objects.requireNonNull(classLoader.getResourceAsStream(MEDIA_PROPERTIES_FILE)));
-
-                String mediaStoreTypeConfig = properties.getProperty(MEDIA_STORE_TYPE);
-                if (StringUtils.isNotBlank(mediaStoreTypeConfig)) {
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug(String.format("The configured media store type is %s.", mediaStoreTypeConfig));
-                    }
-                    mediaStorageType = mediaStoreTypeConfig;
-                } else {
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("MediaStoreType is not configured in media.properties file. Hence proceeding" +
-                                " with the default value: " + DEFAULT_MEDIA_STORE_TYPE_VALUE);
-                    }
-                    mediaStorageType = DEFAULT_MEDIA_STORE_TYPE_VALUE;
-                }
-
-                String[] allowedContentTypes = properties.getProperty(ALLOWED_CONTENT_TYPES).split(",");
-                for (String contentType : allowedContentTypes) {
-                    contentTypes.put(contentType, Arrays.asList(properties.getProperty(contentType +
-                            ALLOWED_CONTENT_SUB_TYPES).split(",")));
-                }
+        ClassLoader classLoader = StorageSystemUtil.class.getClassLoader();
+        if (classLoader != null) {
+            InputStream inputStream = classLoader.getResourceAsStream(MEDIA_PROPERTIES_FILE);
+            if (inputStream == null) {
+                throw new StorageSystemException("Error while loading media.properties file.");
             }
-        } catch (IOException e) {
-            LOGGER.error("Error while loading media.properties file.", e);
+            try {
+                properties.load(inputStream);
+            } catch (IOException e) {
+                throw new StorageSystemException("Error while loading media.properties file.", e);
+            }
+
+            String mediaStoreTypeConfig = properties.getProperty(MEDIA_STORE_TYPE);
+            if (StringUtils.isNotBlank(mediaStoreTypeConfig)) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(String.format("The configured media store type is %s.", mediaStoreTypeConfig));
+                }
+                mediaStorageType = mediaStoreTypeConfig;
+            } else {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("MediaStoreType is not configured in media.properties file. Hence proceeding" +
+                            " with the default value: " + DEFAULT_MEDIA_STORE_TYPE_VALUE);
+                }
+                mediaStorageType = DEFAULT_MEDIA_STORE_TYPE_VALUE;
+            }
+
+            String[] allowedContentTypes = properties.getProperty(ALLOWED_CONTENT_TYPES).split(",");
+            for (String contentType : allowedContentTypes) {
+                contentTypes.put(contentType, Arrays.asList(properties.getProperty(contentType +
+                        ALLOWED_CONTENT_SUB_TYPES).split(",")));
+            }
         }
     }
 }

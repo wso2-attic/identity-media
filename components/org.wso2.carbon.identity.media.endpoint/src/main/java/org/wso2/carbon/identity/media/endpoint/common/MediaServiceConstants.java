@@ -70,7 +70,9 @@ public class MediaServiceConstants {
         ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION("65006", "Unable to retrieve the requested media information.",
                 "Server encountered an error while retrieving the information for media with id: %s"),
         ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL("65007", "Unable to build uploaded media location URL.",
-                "Server encountered an error while building URL for response header.");
+                "Server encountered an error while building URL for response header."),
+        ERROR_CODE_ERROR_RETRIEVING_STORAGE_SYSTEM_MANAGER("65008", "Unable to fulfill the request.",
+                "Server encountered an error while retrieving StorageSystemManager.");
 
         private final String code;
         private final String message;

@@ -254,13 +254,14 @@ public class StorageSystemManager {
 
         HashMap<String, List<String>> allowedContentTypes = StorageSystemUtil.getContentTypes();
         if (MapUtils.isEmpty(allowedContentTypes) || !allowedContentTypes.keySet().contains(mediaTypePathParam)) {
-            throw new StorageSystemException();
+            throw new StorageSystemException(String.format("Uploading media of content-type: %s/%s is not allowed.",
+                    mediaTypePathParam, contentSubType));
         }
 
         List<String> allowedContentSubTypes = allowedContentTypes.get(mediaTypePathParam);
-        if (CollectionUtils.isEmpty(allowedContentSubTypes) ||
-                !allowedContentSubTypes.contains(contentSubType)) {
-            throw new StorageSystemException();
+        if (CollectionUtils.isEmpty(allowedContentSubTypes) || !allowedContentSubTypes.contains(contentSubType)) {
+            throw new StorageSystemException(String.format("Uploading media of content-type: %s/%s is not allowed.",
+                    mediaTypePathParam, contentSubType));
         }
     }
 
@@ -273,7 +274,8 @@ public class StorageSystemManager {
 
         HashMap<String, List<String>> allowedContentTypes = StorageSystemUtil.getContentTypes();
         if (MapUtils.isEmpty(allowedContentTypes) || !allowedContentTypes.keySet().contains(mediaTypePathParam)) {
-            throw new StorageSystemException();
+            throw new StorageSystemException(String.format("Unsupported file content type: %s available as a path" +
+                    " parameter in the request.", mediaTypePathParam));
         }
     }
 

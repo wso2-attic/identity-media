@@ -56,8 +56,16 @@ public class Util {
      */
     public static StorageSystemManager getStorageSystemManager() {
 
-        return (StorageSystemManager) PrivilegedCarbonContext.getThreadLocalCarbonContext()
-                .getOSGiService(StorageSystemManager.class, null);
+        try {
+            return (StorageSystemManager) PrivilegedCarbonContext.getThreadLocalCarbonContext()
+                    .getOSGiService(StorageSystemManager.class, null);
+        } catch (Throwable e) {
+            MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage
+                    .ERROR_CODE_ERROR_RETRIEVING_STORAGE_SYSTEM_MANAGER;
+            Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
+            LOG.error("Error while retrieving StorageSystemManager.", e);
+            throw handleException(status, errorMessage);
+        }
     }
 
     /**
