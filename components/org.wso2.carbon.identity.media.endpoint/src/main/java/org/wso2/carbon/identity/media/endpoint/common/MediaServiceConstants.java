@@ -43,9 +43,9 @@ public class MediaServiceConstants {
         ERROR_CODE_INVALID_REQUEST_BODY("60001", "Invalid Request.", "Provided request body content " +
                 "is not in the expected format."),
         ERROR_CODE_ERROR_UPLOADING_MEDIA_CONTENT_TYPE_MISMATCH("60002", "Unable to upload the provided media.",
-                "Expected file content type: %s"),
+                "Mismatch in the media type path parameter: %s and the actual media type of the media: %s"),
         ERROR_CODE_ERROR_UPLOADING_MEDIA_UNSUPPORTED_CONTENT_TYPE("60003", "Unable to upload the provided media.",
-                "Unsupported file content type."),
+                "Unsupported file content type: %s"),
         ERROR_CODE_ERROR_DOWNLOADING_MEDIA_FILE_NOT_FOUND("60004", "Unable to download the requested media.",
                 "File with id: %s not found."),
         ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION_FILE_NOT_FOUND("60005", "Unable to retrieve the requested" +

@@ -64,7 +64,7 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public boolean isMediaDeleted(String id, String type, String tenantDomain) throws StorageSystemException {
+    public void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemException {
 
         throw new UnsupportedOperationException("Database based delete file operation not supported.");
     }

@@ -41,7 +41,7 @@ public interface StorageSystem {
     boolean isMediaManagementAllowedForEndUser(String id, String type, String tenantDomain) throws
             StorageSystemException;
 
-    boolean isMediaDeleted(String id, String type, String tenantDomain) throws StorageSystemException;
+    void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemException;
 
     MediaInformation getMediaInformation(String id, String type, String tenantDomain) throws
             StorageSystemException;

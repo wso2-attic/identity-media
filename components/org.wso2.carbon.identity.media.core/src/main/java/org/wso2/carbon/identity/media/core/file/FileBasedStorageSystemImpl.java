@@ -28,7 +28,9 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.media.core.DataContent;
 import org.wso2.carbon.identity.media.core.FileContentImpl;
 import org.wso2.carbon.identity.media.core.StorageSystem;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemClientException;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemServerException;
 import org.wso2.carbon.identity.media.core.model.FileSecurity;
 import org.wso2.carbon.identity.media.core.model.MediaFileDownloadData;
 import org.wso2.carbon.identity.media.core.model.MediaInformation;
@@ -86,7 +88,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             }
             return uploadMediaUsingChannels(inputStreams, mediaMetadata, uuid, tenantDomain);
         } catch (IOException e) {
-            throw new StorageSystemException("Error while uploading media to file system.", e);
+            throw new StorageSystemServerException("Error while uploading media to file system.", e);
         }
 
     }
@@ -103,11 +105,11 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             }
             return fileContent;
         } catch (IOException e) {
-            throw new StorageSystemException("Error while retrieving the stored file", e);
+            throw new StorageSystemServerException("Error while retrieving the stored file", e);
         } catch (ParseException e) {
             String errorMsg = String.format("Unable to parse metadata in JSON format for stored file with id : %s " +
                     "and of type %s in tenant domain: %s", id, type, tenantDomain);
-            throw new StorageSystemException(errorMsg, e);
+            throw new StorageSystemServerException(errorMsg, e);
         }
     }
 
@@ -125,11 +127,11 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         } catch (IOException e) {
             String errorMsg = String.format("Error while retrieving metadata for stored file with id: %s and of type " +
                     "%s in tenant domain: %s", id, type, tenantDomain);
-            throw new StorageSystemException(errorMsg, e);
+            throw new StorageSystemServerException(errorMsg, e);
         } catch (ParseException e) {
             String errorMsg = String.format("Unable to parse metadata in JSON format for stored file with id : %s " +
                     "and of type %s in tenant domain: %s", id, type, tenantDomain);
-            throw new StorageSystemException(errorMsg, e);
+            throw new StorageSystemServerException(errorMsg, e);
         }
     }
 
@@ -147,11 +149,11 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         } catch (IOException e) {
             String errorMsg = String.format("Error while retrieving metadata for stored file with id: %s and of type " +
                     "%s in tenant domain: %s", id, type, tenantDomain);
-            throw new StorageSystemException(errorMsg, e);
+            throw new StorageSystemServerException(errorMsg, e);
         } catch (ParseException e) {
             String errorMsg = String.format("Unable to parse metadata in JSON format for stored file with id : %s " +
                     "and of type %s in tenant domain: %s", id, type, tenantDomain);
-            throw new StorageSystemException(errorMsg, e);
+            throw new StorageSystemServerException(errorMsg, e);
         }
     }
 
@@ -169,22 +171,22 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         } catch (IOException e) {
             String errorMsg = String.format("Error while retrieving metadata for stored file with id: %s and of type " +
                     "%s in tenant domain: %s", id, type, tenantDomain);
-            throw new StorageSystemException(errorMsg, e);
+            throw new StorageSystemServerException(errorMsg, e);
         } catch (ParseException e) {
             String errorMsg = String.format("Unable to parse metadata in JSON format for stored file with id : %s " +
                     "and of type %s in tenant domain: %s", id, type, tenantDomain);
-            throw new StorageSystemException(errorMsg, e);
+            throw new StorageSystemServerException(errorMsg, e);
         }
     }
 
     @Override
-    public boolean isMediaDeleted(String id, String type, String tenantDomain) throws StorageSystemException {
+    public void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemException {
 
         try {
-            return isFileDeleted(id, type, tenantDomain);
+            deleteFile(id, type, tenantDomain);
         } catch (IOException e) {
             String errorMsg = String.format("Error while deleting the stored file of type %s.", type);
-            throw new StorageSystemException(errorMsg, e);
+            throw new StorageSystemServerException(errorMsg, e);
         }
     }
 
@@ -202,11 +204,11 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         } catch (IOException e) {
             String errorMsg = String.format("Error while retrieving metadata for stored file with id: %s and of type " +
                     "%s in tenant domain: %s", id, type, tenantDomain);
-            throw new StorageSystemException(errorMsg, e);
+            throw new StorageSystemServerException(errorMsg, e);
         } catch (ParseException e) {
             String errorMsg = String.format("Unable to parse metadata in JSON format for stored file with id : %s " +
                     "and of type %s in tenant domain: %s", id, type, tenantDomain);
-            throw new StorageSystemException(errorMsg, e);
+            throw new StorageSystemServerException(errorMsg, e);
         }
     }
 
@@ -453,22 +455,27 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         metadata.put(MEDIA_SECURITY, fileSecurityJSON);
     }
 
-    private boolean isFileDeleted(String id, String type, String tenantDomain) throws IOException {
+    private void deleteFile(String id, String type, String tenantDomain) throws IOException,
+            StorageSystemClientException {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
 
         Path fileStorageLocation = getStorageDirectory(type, tenantId, id);
-        if (fileStorageLocation != null) {
-            Path filePath = fileStorageLocation.resolve(id).normalize();
-            String metadataFileName = id + METADATA_FILE_SUFFIX + METADATA_FILE_EXTENSION;
-            Path metadataFilePath = fileStorageLocation.resolve(metadataFileName).normalize();
-            if (Files.exists((filePath))) {
-                Files.delete(filePath);
-                Files.deleteIfExists(metadataFilePath);
-                return true;
-            }
+        if (fileStorageLocation == null) {
+            throw new StorageSystemClientException(String.format("Delete request cannot be performed as media with " +
+                            "id: %s of type: %s in tenant domain: %s not found.", id, type, tenantDomain));
         }
-        return false;
+
+        Path filePath = fileStorageLocation.resolve(id).normalize();
+        String metadataFileName = id + METADATA_FILE_SUFFIX + METADATA_FILE_EXTENSION;
+        Path metadataFilePath = fileStorageLocation.resolve(metadataFileName).normalize();
+        if (Files.notExists(filePath)) {
+            throw new StorageSystemClientException(String.format("Delete request cannot be performed as media with " +
+                    "id: %s of type: %s in tenant domain: %s not found.", id, type, tenantDomain));
+        }
+
+        Files.delete(filePath);
+        Files.delete(metadataFilePath);
     }
 
     private Path getStorageDirectory(String fileType, int tenantId, String id) {

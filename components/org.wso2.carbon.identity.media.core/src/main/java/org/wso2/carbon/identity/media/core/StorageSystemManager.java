@@ -22,6 +22,7 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemClientException;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
 import org.wso2.carbon.identity.media.core.internal.MediaServiceDataHolder;
 import org.wso2.carbon.identity.media.core.model.MediaInformation;
@@ -203,19 +204,17 @@ public class StorageSystemManager {
      * @param type         The high level content-type of the resource (if media content-type is image/png then
      *                     type would be image).
      * @param tenantDomain The tenant domain of the service call.
-     * @return true if media is deleted successfully.
      * @throws StorageSystemException Exception related to file deletion.
      */
-    public boolean isMediaDeleted(String id, String type, String tenantDomain) throws StorageSystemException {
+    public void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemException {
 
         StorageSystemFactory storageSystemFactory = getStorageSystemFactory(StorageSystemUtil.getMediaStoreType());
         if (storageSystemFactory != null) {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(String.format("Delete media of type: %s in tenant domain: %s.", type, tenantDomain));
             }
-            return storageSystemFactory.getInstance().isMediaDeleted(id, type, tenantDomain);
+            storageSystemFactory.getInstance().deleteMedia(id, type, tenantDomain);
         }
-        return false;
     }
 
     /**
@@ -248,20 +247,22 @@ public class StorageSystemManager {
      * @param mediaTypePathParam The media type available as a path parameter in the upload request.
      * @param contentSubType     The  subtype of the uploaded media (if media content-type is image/png then
      *                           subtype would be png).
+     * @throws StorageSystemClientException Client exception related to validating media type of the media to be
+     *                                      uploaded.
      */
     public void validateFileUploadMediaTypes(String mediaTypePathParam, String contentSubType)
-            throws StorageSystemException {
+            throws StorageSystemClientException {
 
         HashMap<String, List<String>> allowedContentTypes = StorageSystemUtil.getContentTypes();
         if (MapUtils.isEmpty(allowedContentTypes) || !allowedContentTypes.keySet().contains(mediaTypePathParam)) {
-            throw new StorageSystemException(String.format("Uploading media of content-type: %s/%s is not allowed.",
-                    mediaTypePathParam, contentSubType));
+            throw new StorageSystemClientException(String.format("Uploading media of content-type: %s/%s is not " +
+                            "allowed.", mediaTypePathParam, contentSubType));
         }
 
         List<String> allowedContentSubTypes = allowedContentTypes.get(mediaTypePathParam);
         if (CollectionUtils.isEmpty(allowedContentSubTypes) || !allowedContentSubTypes.contains(contentSubType)) {
-            throw new StorageSystemException(String.format("Uploading media of content-type: %s/%s is not allowed.",
-                    mediaTypePathParam, contentSubType));
+            throw new StorageSystemClientException(String.format("Uploading media of content-type: %s/%s is not " +
+                            "allowed.", mediaTypePathParam, contentSubType));
         }
     }
 
@@ -269,13 +270,14 @@ public class StorageSystemManager {
      * Validate if the media content type path parameter in the request is a supported content type.
      *
      * @param mediaTypePathParam The media type available as a path parameter in the request.
+     * @throws StorageSystemClientException Client exception related to validating media type path parameter.
      */
-    public void validateMediaTypePathParam(String mediaTypePathParam) throws StorageSystemException {
+    public void validateMediaTypePathParam(String mediaTypePathParam) throws StorageSystemClientException {
 
         HashMap<String, List<String>> allowedContentTypes = StorageSystemUtil.getContentTypes();
         if (MapUtils.isEmpty(allowedContentTypes) || !allowedContentTypes.keySet().contains(mediaTypePathParam)) {
-            throw new StorageSystemException(String.format("Unsupported file content type: %s available as a path" +
-                    " parameter in the request.", mediaTypePathParam));
+            throw new StorageSystemClientException(String.format("Unsupported file content type: %s available as a " +
+                    "path parameter in the request.", mediaTypePathParam));
         }
     }
 

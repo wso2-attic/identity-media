@@ -26,6 +26,7 @@ import org.wso2.carbon.identity.media.core.DataContent;
 import org.wso2.carbon.identity.media.core.FileContent;
 import org.wso2.carbon.identity.media.core.StorageSystemManager;
 import org.wso2.carbon.identity.media.core.StreamContent;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemClientException;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
 import org.wso2.carbon.identity.media.core.model.FileSecurity;
 import org.wso2.carbon.identity.media.core.model.MediaInformation;
@@ -172,18 +173,28 @@ public class MediaService {
      */
     public void validateFileUploadMediaTypes(String mediaTypePathParam, MediaType mediaType) {
 
-        if (!StringUtils.equals(mediaTypePathParam, mediaType.getType())) {
+        String highLevelContentType = mediaType.getType();
+        if (!StringUtils.equals(mediaTypePathParam, highLevelContentType)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(String.format("Unable to upload the provided media due to a mismatch in the media type path" +
+                                " parameter: %s and the actual media type of the media: %s", mediaTypePathParam,
+                        highLevelContentType));
+            }
             throw handleException(Response.Status.FORBIDDEN,
                     MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UPLOADING_MEDIA_CONTENT_TYPE_MISMATCH,
-                    mediaTypePathParam);
+                    mediaTypePathParam, highLevelContentType);
         }
 
         StorageSystemManager storageSystemManager = getStorageSystemManager();
         try {
             storageSystemManager.validateFileUploadMediaTypes(mediaTypePathParam, mediaType.getSubtype());
-        } catch (StorageSystemException e) {
+        } catch (StorageSystemClientException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Unable to upload the provided media.", e);
+            }
             throw handleException(Response.Status.FORBIDDEN,
-                    MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UPLOADING_MEDIA_UNSUPPORTED_CONTENT_TYPE);
+                    MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UPLOADING_MEDIA_UNSUPPORTED_CONTENT_TYPE,
+                    mediaType.toString());
         }
     }
 
@@ -231,6 +242,10 @@ public class MediaService {
         try {
             DataContent dataContent = storageSystemManager.readContent(id, tenantDomain, type);
             if (dataContent == null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(String.format("Media download request can't be performed as media with id: %s of " +
+                            "type: %s in tenant domain: %s is not existing.", id, type, tenantDomain));
+                }
                 throw handleException(Response.Status.NOT_FOUND,
                         MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DOWNLOADING_MEDIA_FILE_NOT_FOUND, id);
             }
@@ -253,7 +268,10 @@ public class MediaService {
         StorageSystemManager storageSystemManager = getStorageSystemManager();
         try {
             storageSystemManager.validateMediaTypePathParam(mediaTypePathParam);
-        } catch (StorageSystemException e) {
+        } catch (StorageSystemClientException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Unable to perform requested media operation.", e);
+            }
             throw handleException(Response.Status.FORBIDDEN,
                     MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UNSUPPORTED_CONTENT_TYPE_PATH_PARAM);
         }
@@ -272,11 +290,13 @@ public class MediaService {
         StorageSystemManager storageSystemManager = getStorageSystemManager();
         String tenantDomain = getTenantDomainFromContext();
         try {
-            boolean mediaDeleted = storageSystemManager.isMediaDeleted(id, type, tenantDomain);
-            if (!mediaDeleted) {
-                throw handleException(Response.Status.NOT_FOUND,
-                        MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DELETING_MEDIA_FILE_NOT_FOUND, id, type);
+            storageSystemManager.deleteMedia(id, type, tenantDomain);
+        } catch (StorageSystemClientException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Client exception while deleting media.", e);
             }
+            throw handleException(Response.Status.NOT_FOUND,
+                    MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DELETING_MEDIA_FILE_NOT_FOUND, id, type);
         } catch (StorageSystemException e) {
             MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                     ERROR_CODE_ERROR_DELETING_MEDIA;
@@ -302,6 +322,10 @@ public class MediaService {
         try {
             MediaInformation mediaInformation = storageSystemManager.retrieveMediaInformation(id, type, tenantDomain);
             if (mediaInformation == null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(String.format("Media information retrieval request can't be performed as media with " +
+                            "id: %s of type: %s in tenant domain: %s is not existing.", id, type, tenantDomain));
+                }
                 throw handleException(Response.Status.NOT_FOUND,
                         MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION_FILE_NOT_FOUND,
                         id);
