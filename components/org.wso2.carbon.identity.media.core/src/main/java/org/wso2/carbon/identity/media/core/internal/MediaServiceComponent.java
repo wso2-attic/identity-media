@@ -31,6 +31,7 @@ import org.wso2.carbon.identity.media.core.StorageSystemFactory;
 import org.wso2.carbon.identity.media.core.StorageSystemManager;
 import org.wso2.carbon.identity.media.core.file.FileBasedStorageSystemFactory;
 import org.wso2.carbon.identity.media.core.jdbc.DatabaseBasedStorageSystemFactory;
+import org.wso2.carbon.identity.media.core.util.StorageSystemUtil;
 import org.wso2.carbon.user.core.service.RealmService;
 
 /**
@@ -45,13 +46,22 @@ public class MediaServiceComponent {
     @Activate
     protected void activate(ComponentContext componentContext) {
 
-        BundleContext bundleContext = componentContext.getBundleContext();
-        MediaServiceDataHolder.getInstance().setBundleContext(bundleContext);
-        StorageSystemFactory fileBasedStorageSystemFactory = new FileBasedStorageSystemFactory();
-        bundleContext.registerService(StorageSystemFactory.class.getName(), fileBasedStorageSystemFactory, null);
-        StorageSystemFactory dbBasedStorageSystemFactory = new DatabaseBasedStorageSystemFactory();
-        bundleContext.registerService(StorageSystemFactory.class.getName(), dbBasedStorageSystemFactory, null);
-        bundleContext.registerService(StorageSystemManager.class, new StorageSystemManager(), null);
+        try {
+            // Load configurations from media.properties file into memory.
+            StorageSystemUtil.loadMediaProperties();
+
+            BundleContext bundleContext = componentContext.getBundleContext();
+            StorageSystemFactory fileBasedStorageSystemFactory = new FileBasedStorageSystemFactory();
+            bundleContext.registerService(StorageSystemFactory.class.getName(), fileBasedStorageSystemFactory, null);
+            StorageSystemFactory dbBasedStorageSystemFactory = new DatabaseBasedStorageSystemFactory();
+            bundleContext.registerService(StorageSystemFactory.class.getName(), dbBasedStorageSystemFactory, null);
+            bundleContext.registerService(StorageSystemManager.class, new StorageSystemManager(), null);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Media service component is activated.");
+            }
+        } catch (Throwable e) {
+            LOGGER.error("Error while activating media service bundle.", e);
+        }
     }
 
     @Deactivate

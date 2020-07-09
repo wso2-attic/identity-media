@@ -36,5 +36,11 @@ public class StorageSystemConstants {
     public static final String MEDIA_SECURITY_ALLOWED_USERS = "allowedUsers";
     public static final String PUBLIC_DOWNLOAD_ACCESS = "public";
     public static final String PROTECTED_DOWNLOAD_ACCESS = "content";
+    static final String MEDIA_PROPERTIES_FILE = "META-INF/media.properties";
+    static final String MEDIA_STORE_TYPE = "MediaStoreType";
+    static final String DEFAULT_MEDIA_STORE_TYPE_VALUE =
+            "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
+    static final String ALLOWED_CONTENT_TYPES = "AllowedContentTypes";
+    static final String ALLOWED_CONTENT_SUB_TYPES = ".AllowedContentSubTypes";
 
 }

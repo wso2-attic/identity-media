@@ -23,7 +23,7 @@
 
     <test name="identity-media-tests" preserve-order="true" parallel="false">
         <classes>
-            <class name="org.wso2.carbon.identity.media.core.StorageSystemManagerTest"></class>
+            <class name="org.wso2.carbon.identity.media.core.StorageSystemManagerTest"/>
         </classes>
     </test>
 </suite>

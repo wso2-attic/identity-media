@@ -16,6 +16,14 @@
 
 package org.wso2.carbon.identity.media.endpoint;
 
+import org.wso2.carbon.identity.media.endpoint.*;
+import org.wso2.carbon.identity.media.endpoint.*;
+import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+import java.io.InputStream;
+import java.util.List;
+import org.wso2.carbon.identity.media.endpoint.Error;
+import java.io.File;
 import javax.ws.rs.core.Response;
 
 

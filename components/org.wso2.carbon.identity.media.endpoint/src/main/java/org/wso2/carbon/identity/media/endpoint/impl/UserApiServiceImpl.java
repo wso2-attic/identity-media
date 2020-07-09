@@ -18,6 +18,7 @@ package org.wso2.carbon.identity.media.endpoint.impl;
 
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.wso2.carbon.identity.media.core.model.MediaInformation;
 import org.wso2.carbon.identity.media.endpoint.PrivilegedUserMetadata;
 import org.wso2.carbon.identity.media.endpoint.UserApiService;
 import org.wso2.carbon.identity.media.endpoint.service.MediaService;
@@ -41,7 +42,8 @@ public class UserApiServiceImpl implements UserApiService {
     @Override
     public Response privilegedUserListMediaInformation(String type, String id) {
 
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        MediaInformation mediaInformation = mediaService.getMediaInformation(type, id);
+        return Response.status(Response.Status.OK).entity(mediaInformation).build();
     }
 
     @Override
@@ -69,6 +71,7 @@ public class UserApiServiceImpl implements UserApiService {
     @Override
     public Response privilegedUserDeleteMedia(String type, String id) {
 
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        mediaService.deleteMedia(type, id);
+        return Response.noContent().build();
     }
 }

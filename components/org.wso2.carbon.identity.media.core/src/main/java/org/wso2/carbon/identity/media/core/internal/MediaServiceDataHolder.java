@@ -17,7 +17,6 @@
  */
 package org.wso2.carbon.identity.media.core.internal;
 
-import org.osgi.framework.BundleContext;
 import org.wso2.carbon.identity.media.core.StorageSystemFactory;
 import org.wso2.carbon.user.core.service.RealmService;
 
@@ -29,7 +28,6 @@ import java.util.Map;
  */
 public class MediaServiceDataHolder {
 
-    private BundleContext bundleContext;
     private Map<String, StorageSystemFactory> storageSystemFactoryMap = new HashMap<>();
     private RealmService realmService;
 
@@ -45,16 +43,6 @@ public class MediaServiceDataHolder {
     public static MediaServiceDataHolder getInstance() {
 
         return SingletonHelper.INSTANCE;
-    }
-
-    public BundleContext getBundleContext() {
-
-        return bundleContext;
-    }
-
-    public void setBundleContext(BundleContext bundleContext) {
-
-        this.bundleContext = bundleContext;
     }
 
     public Map<String, StorageSystemFactory> getStorageSystemFactories() {

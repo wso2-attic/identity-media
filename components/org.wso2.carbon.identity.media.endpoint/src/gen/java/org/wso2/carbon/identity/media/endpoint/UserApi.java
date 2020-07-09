@@ -22,10 +22,18 @@ import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import java.io.InputStream;
 import java.util.List;
 
+import org.wso2.carbon.identity.media.endpoint.Error;
+import java.io.File;
+import org.wso2.carbon.identity.media.endpoint.MultipleFilesUploadResponse;
+import org.wso2.carbon.identity.media.endpoint.PrivilegedUserMetadata;
+import org.wso2.carbon.identity.media.endpoint.UserApiService;
+
 import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import io.swagger.annotations.*;
+
+import javax.validation.constraints.*;
 
 @Path("/user")
 @Api(description = "The user API")
@@ -36,18 +44,42 @@ public class UserApi  {
     private UserApiService delegate;
 
     @Valid
+    @DELETE
+    @Path("/{type}/{id}")
+    
+    @Produces({ "application/json" })
+    @ApiOperation(value = "A privileged user deletes a resource file and metadata associated with the resource file.", notes = "", response = Void.class, authorizations = {
+        @Authorization(value = "BasicAuth"),
+        @Authorization(value = "OAuth2", scopes = {
+            
+        })
+    }, tags={ "Delete Media", })
+    @ApiResponses(value = { 
+        @ApiResponse(code = 204, message = "Resource file and metadata deleted successfully.", response = Void.class),
+        @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
+        @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
+        @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
+        @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
+        @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
+    })
+    public Response privilegedUserDeleteMedia(@ApiParam(value = "The media type.",required=true) @PathParam("type") String type, @ApiParam(value = "Unique identifier for the file.",required=true) @PathParam("id") String id) {
+
+        return delegate.privilegedUserDeleteMedia(type,  id );
+    }
+
+    @Valid
     @GET
     @Path("/{type}/{id}")
     
     @Produces({ "application/json" })
-    @ApiOperation(value = "A privileged user requests media location(s) and associated metadata for the given media id.", notes = "", response = PrivilegedUserMediaInformationResponse.class, authorizations = {
+    @ApiOperation(value = "A privileged user requests media location(s) and associated metadata for the given media id.", notes = "", response = Object.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
         })
     }, tags={ "Get Media Details", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Requested media information retrieved successfully.", response = PrivilegedUserMediaInformationResponse.class),
+        @ApiResponse(code = 200, message = "Requested media information retrieved successfully.", response = Object.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
@@ -69,7 +101,7 @@ public class UserApi  {
         @Authorization(value = "OAuth2", scopes = {
             
         })
-    }, tags={ "Upload Media", })
+    }, tags={ "Upload Media" })
     @ApiResponses(value = { 
         @ApiResponse(code = 201, message = "File(s) uploaded successfully.", response = MultipleFilesUploadResponse.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
@@ -81,30 +113,6 @@ public class UserApi  {
     public Response privilegedUserUploadMedia(@ApiParam(value = "The media type.",required=true) @PathParam("type") String type, @Multipart(value = "files") List<InputStream> filesInputStream, @Multipart(value = "files" ) List<Attachment> filesDetail, @Multipart(value = "metadata", required = false)  PrivilegedUserMetadata metadata) {
 
         return delegate.privilegedUserUploadMedia(type,  filesInputStream, filesDetail,  metadata );
-    }
-
-    @Valid
-    @DELETE
-    @Path("/{type}/{id}")
-    
-    @Produces({ "application/json" })
-    @ApiOperation(value = "A privileged user deletes a resource file and metadata associated with the resource file.", notes = "", response = Void.class, authorizations = {
-        @Authorization(value = "BasicAuth"),
-        @Authorization(value = "OAuth2", scopes = {
-            
-        })
-    }, tags={ "Delete Media" })
-    @ApiResponses(value = { 
-        @ApiResponse(code = 204, message = "Resource file and metadata deleted successfully.", response = Void.class),
-        @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
-        @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
-        @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
-        @ApiResponse(code = 403, message = "Access forbidden.", response = Void.class),
-        @ApiResponse(code = 500, message = "Internal server error.", response = Error.class)
-    })
-    public Response privilegedUserDeleteMedia(@ApiParam(value = "The media type.",required=true) @PathParam("type") String type, @ApiParam(value = "Unique identifier for the file.",required=true) @PathParam("id") String id) {
-
-        return delegate.privilegedUserDeleteMedia(type,  id );
     }
 
 }

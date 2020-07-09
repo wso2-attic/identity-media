@@ -17,10 +17,12 @@
  */
 package org.wso2.carbon.identity.media.core;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemClientException;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
 import org.wso2.carbon.identity.media.core.internal.MediaServiceDataHolder;
 import org.wso2.carbon.identity.media.core.model.MediaInformation;
@@ -29,6 +31,7 @@ import org.wso2.carbon.identity.media.core.util.StorageSystemUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -51,7 +54,7 @@ public class StorageSystemManager {
             throws StorageSystemException {
 
         if (StringUtils.isNotBlank(tenantDomain)) {
-            StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+            StorageSystemFactory storageSystemFactory = getStorageSystemFactory(StorageSystemUtil.getMediaStoreType());
             if (storageSystemFactory != null) {
                 String uuid = StorageSystemUtil.calculateUUID();
                 return storageSystemFactory.getInstance().addMedia(inputStream, mediaMetadata, uuid, tenantDomain);
@@ -79,7 +82,7 @@ public class StorageSystemManager {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.format("Download media for tenant domain %s.", tenantDomain));
         }
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(StorageSystemUtil.getMediaStoreType());
         if (storageSystemFactory != null) {
             return storageSystemFactory.getInstance().getFile(id, tenantDomain, type);
         }
@@ -92,10 +95,10 @@ public class StorageSystemManager {
     /**
      * Security evaluation for downloading public resource.
      *
-     * @param id                  The unique id related to the requesting resource.
-     * @param type                The high level content-type of the resource (if media content-type is image/png then
-     *                            type would be image).
-     * @param tenantDomain        The tenant domain of the service call.
+     * @param id           The unique id related to the requesting resource.
+     * @param type         The high level content-type of the resource (if media content-type is image/png then
+     *                     type would be image).
+     * @param tenantDomain The tenant domain of the service call.
      * @return true if access to the resource is permitted.
      * @throws StorageSystemException Exception related to security evaluation during file download.
      */
@@ -106,7 +109,7 @@ public class StorageSystemManager {
             LOGGER.debug(String.format("Evaluate security for media of type: %s, unique id: %s and tenant domain %s.",
                     id, type, tenantDomain));
         }
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(StorageSystemUtil.getMediaStoreType());
         if (storageSystemFactory != null) {
             return storageSystemFactory.getInstance().isDownloadAllowedForPublicMedia(id, type, tenantDomain);
         }
@@ -119,10 +122,10 @@ public class StorageSystemManager {
     /**
      * Security evaluation for downloading protected resource.
      *
-     * @param id                  The unique id related to the requesting resource.
-     * @param type                The high level content-type of the resource (if media content-type is image/png then
-     *                            type would be image).
-     * @param tenantDomain        The tenant domain of the service call.
+     * @param id           The unique id related to the requesting resource.
+     * @param type         The high level content-type of the resource (if media content-type is image/png then
+     *                     type would be image).
+     * @param tenantDomain The tenant domain of the service call.
      * @return true if access to the resource is permitted.
      * @throws StorageSystemException Exception related to security evaluation during file download.
      */
@@ -133,7 +136,7 @@ public class StorageSystemManager {
             LOGGER.debug(String.format("Evaluate download security for media of type: %s, unique id: %s and tenant " +
                             "domain %s.", id, type, tenantDomain));
         }
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(StorageSystemUtil.getMediaStoreType());
         if (storageSystemFactory != null) {
             return storageSystemFactory.getInstance().isDownloadAllowedForProtectedMedia(id, type, tenantDomain);
         }
@@ -146,10 +149,10 @@ public class StorageSystemManager {
     /**
      * Security evaluation for media management by an end-user.
      *
-     * @param id                  The unique id of the media.
-     * @param type                The high level content-type of the media (if media content-type is image/png then
-     *                            type would be image).
-     * @param tenantDomain        The tenant domain of the service call.
+     * @param id           The unique id of the media.
+     * @param type         The high level content-type of the media (if media content-type is image/png then
+     *                     type would be image).
+     * @param tenantDomain The tenant domain of the service call.
      * @return true if media management is permitted.
      * @throws StorageSystemException Exception related to security evaluation.
      */
@@ -160,7 +163,7 @@ public class StorageSystemManager {
             LOGGER.debug(String.format("Evaluate media management security for media of type: %s, unique id: %s and " +
                     "tenant domain %s.", id, type, tenantDomain));
         }
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(StorageSystemUtil.getMediaStoreType());
         if (storageSystemFactory != null) {
             return storageSystemFactory.getInstance().isMediaManagementAllowedForEndUser(id, type, tenantDomain);
         }
@@ -183,7 +186,7 @@ public class StorageSystemManager {
     public MediaInformation retrieveMediaInformation(String id, String type, String tenantDomain)
             throws StorageSystemException {
 
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(StorageSystemUtil.getMediaStoreType());
         if (storageSystemFactory != null) {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(String.format("Retrieve information for media of type: %s, unique id: %s and tenant " +
@@ -202,18 +205,16 @@ public class StorageSystemManager {
      *                     type would be image).
      * @param tenantDomain The tenant domain of the service call.
      * @throws StorageSystemException Exception related to file deletion.
-     * @return true if media is deleted successfully.
      */
-    public boolean isMediaDeleted(String id, String type, String tenantDomain) throws StorageSystemException {
+    public void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemException {
 
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(StorageSystemUtil.getMediaStoreType());
         if (storageSystemFactory != null) {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(String.format("Delete media of type: %s in tenant domain: %s.", type, tenantDomain));
             }
-            return storageSystemFactory.getInstance().isMediaDeleted(id, type, tenantDomain);
+            storageSystemFactory.getInstance().deleteMedia(id, type, tenantDomain);
         }
-        return false;
     }
 
     /**
@@ -230,7 +231,7 @@ public class StorageSystemManager {
     public InputStream transform(String id, String type, String tenantDomain, InputStream inputStream)
             throws StorageSystemException {
 
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(readStorageTypeFromConfig());
+        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(StorageSystemUtil.getMediaStoreType());
         if (storageSystemFactory != null) {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(String.format("Delete image for category %s and tenant domain %s.", type, tenantDomain));
@@ -240,19 +241,44 @@ public class StorageSystemManager {
         return new ByteArrayInputStream(new byte[0]);
     }
 
-    private String readStorageTypeFromConfig() {
+    /**
+     * Validate if the uploaded media content type is a supported media type.
+     *
+     * @param mediaTypePathParam The media type available as a path parameter in the upload request.
+     * @param contentSubType     The  subtype of the uploaded media (if media content-type is image/png then
+     *                           subtype would be png).
+     * @throws StorageSystemClientException Client exception related to validating media type of the media to be
+     *                                      uploaded.
+     */
+    public void validateFileUploadMediaTypes(String mediaTypePathParam, String contentSubType)
+            throws StorageSystemClientException {
 
-        String contentStoreType = IdentityUtil.getProperty("ContentStore.Type");
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(String.format("The configured content store type is %s.", contentStoreType));
+        HashMap<String, List<String>> allowedContentTypes = StorageSystemUtil.getContentTypes();
+        if (MapUtils.isEmpty(allowedContentTypes) || !allowedContentTypes.keySet().contains(mediaTypePathParam)) {
+            throw new StorageSystemClientException(String.format("Uploading media of content-type: %s/%s is not " +
+                            "allowed.", mediaTypePathParam, contentSubType));
         }
-        if (StringUtils.isEmpty(contentStoreType)) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("ContentStore.Type is not configured in identity.xml. Proceeding with the default value.");
-            }
-            contentStoreType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
+
+        List<String> allowedContentSubTypes = allowedContentTypes.get(mediaTypePathParam);
+        if (CollectionUtils.isEmpty(allowedContentSubTypes) || !allowedContentSubTypes.contains(contentSubType)) {
+            throw new StorageSystemClientException(String.format("Uploading media of content-type: %s/%s is not " +
+                            "allowed.", mediaTypePathParam, contentSubType));
         }
-        return contentStoreType;
+    }
+
+    /**
+     * Validate if the media content type path parameter in the request is a supported content type.
+     *
+     * @param mediaTypePathParam The media type available as a path parameter in the request.
+     * @throws StorageSystemClientException Client exception related to validating media type path parameter.
+     */
+    public void validateMediaTypePathParam(String mediaTypePathParam) throws StorageSystemClientException {
+
+        HashMap<String, List<String>> allowedContentTypes = StorageSystemUtil.getContentTypes();
+        if (MapUtils.isEmpty(allowedContentTypes) || !allowedContentTypes.keySet().contains(mediaTypePathParam)) {
+            throw new StorageSystemClientException(String.format("Unsupported file content type: %s available as a " +
+                    "path parameter in the request.", mediaTypePathParam));
+        }
     }
 
     private StorageSystemFactory getStorageSystemFactory(String storageType) {
