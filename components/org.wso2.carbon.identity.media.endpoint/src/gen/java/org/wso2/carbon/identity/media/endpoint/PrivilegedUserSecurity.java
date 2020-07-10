@@ -35,7 +35,7 @@ import javax.xml.bind.annotation.*;
 public class PrivilegedUserSecurity  {
   
     private Boolean allowedAll;
-    private List<String> allowedUsers = null;
+    private List<String> allowedUserIds = null;
 
 
     /**
@@ -58,29 +58,29 @@ public class PrivilegedUserSecurity  {
     }
 
     /**
-    * The set of users entitled to access the file.
+    * The ids of set of users entitled to access the file.
     **/
-    public PrivilegedUserSecurity allowedUsers(List<String> allowedUsers) {
+    public PrivilegedUserSecurity allowedUserIds(List<String> allowedUserIds) {
 
-        this.allowedUsers = allowedUsers;
+        this.allowedUserIds = allowedUserIds;
         return this;
     }
     
-    @ApiModelProperty(example = "[\"user1\",\"user2\"]", value = "The set of users entitled to access the file.")
-    @JsonProperty("allowedUsers")
+    @ApiModelProperty(example = "[\"de0f7994-eb83-4cd9-96db-52cb62a1feaf\",\"fcb1940b-d669-4c58-8292-e8bca0f606b4\"]", value = "The ids of set of users entitled to access the file.")
+    @JsonProperty("allowedUserIds")
     @Valid
-    public List<String> getAllowedUsers() {
-        return allowedUsers;
+    public List<String> getAllowedUserIds() {
+        return allowedUserIds;
     }
-    public void setAllowedUsers(List<String> allowedUsers) {
-        this.allowedUsers = allowedUsers;
+    public void setAllowedUserIds(List<String> allowedUserIds) {
+        this.allowedUserIds = allowedUserIds;
     }
 
-    public PrivilegedUserSecurity addAllowedUsersItem(String allowedUsersItem) {
-        if (this.allowedUsers == null) {
-            this.allowedUsers = new ArrayList<>();
+    public PrivilegedUserSecurity addAllowedUserIdsItem(String allowedUserIdsItem) {
+        if (this.allowedUserIds == null) {
+            this.allowedUserIds = new ArrayList<>();
         }
-        this.allowedUsers.add(allowedUsersItem);
+        this.allowedUserIds.add(allowedUserIdsItem);
         return this;
     }
 
@@ -97,12 +97,12 @@ public class PrivilegedUserSecurity  {
         }
         PrivilegedUserSecurity privilegedUserSecurity = (PrivilegedUserSecurity) o;
         return Objects.equals(this.allowedAll, privilegedUserSecurity.allowedAll) &&
-            Objects.equals(this.allowedUsers, privilegedUserSecurity.allowedUsers);
+            Objects.equals(this.allowedUserIds, privilegedUserSecurity.allowedUserIds);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(allowedAll, allowedUsers);
+        return Objects.hash(allowedAll, allowedUserIds);
     }
 
     @Override
@@ -112,7 +112,7 @@ public class PrivilegedUserSecurity  {
         sb.append("class PrivilegedUserSecurity {\n");
         
         sb.append("    allowedAll: ").append(toIndentedString(allowedAll)).append("\n");
-        sb.append("    allowedUsers: ").append(toIndentedString(allowedUsers)).append("\n");
+        sb.append("    allowedUserIds: ").append(toIndentedString(allowedUserIds)).append("\n");
         sb.append("}");
         return sb.toString();
     }

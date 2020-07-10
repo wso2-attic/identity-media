@@ -96,7 +96,7 @@ public class Util {
     public static MediaEndpointException handleException(Exception e, MediaServiceConstants.ErrorMessage errorMessage,
                                                          Log log, Response.Status status, String... data) {
 
-        Error error = buildError(errorMessage, log, e, errorMessage.getDescription(), data);
+        Error error = buildError(errorMessage, log, e, data);
         return new MediaEndpointException(status, error);
     }
 
@@ -111,29 +111,28 @@ public class Util {
 
         Error error = new Error();
         error.setCode(errorMessage.getCode());
-        error.setDescription(buildErrorDescription(errorMessage, data));
+        error.setDescription(buildErrorDescription(errorMessage.getDescription(), data));
         error.setMessage(errorMessage.getMessage());
         error.setTraceId(getCorrelation());
         return error;
     }
 
-    private static String buildErrorDescription(MediaServiceConstants.ErrorMessage errorMessage, String... data) {
+    private static String buildErrorDescription(String errorDescription, String... data) {
 
-        String errorDescription;
         if (ArrayUtils.isNotEmpty(data)) {
-            errorDescription = String.format(errorMessage.getDescription(), data);
+            return String.format(errorDescription, data);
         } else {
-            errorDescription = errorMessage.getDescription();
+            return errorDescription;
         }
-        return errorDescription;
     }
 
     private static Error buildError(MediaServiceConstants.ErrorMessage errorMessage, Log log, Exception e,
-                                    String message, String... data) {
+                                    String... data) {
 
         Error error = getError(errorMessage, data);
         String errorMessageFormat = "errorCode: %s | message: %s";
-        String errorMsg = String.format(errorMessageFormat, error.getCode(), message);
+        String errorMsg = String.format(errorMessageFormat, error.getCode(),
+                buildErrorDescription(errorMessage.getDescription(), data));
         log.error(errorMsg, e);
         return error;
     }

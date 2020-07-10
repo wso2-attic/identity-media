@@ -27,7 +27,7 @@ import org.wso2.carbon.identity.media.core.FileContent;
 import org.wso2.carbon.identity.media.core.StorageSystemManager;
 import org.wso2.carbon.identity.media.core.StreamContent;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemClientException;
-import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemServerException;
 import org.wso2.carbon.identity.media.core.model.FileSecurity;
 import org.wso2.carbon.identity.media.core.model.MediaInformation;
 import org.wso2.carbon.identity.media.core.model.MediaMetadata;
@@ -67,8 +67,12 @@ public class MediaService {
     public String uploadPrivilegedUserMedia(List<InputStream> filesInputStream, List<Attachment> filesDetail,
                                             PrivilegedUserMetadata privilegedUserMetadata) {
 
+        StorageSystemManager storageSystemManager = getStorageSystemManager();
         MediaMetadata mediaMetadata = new MediaMetadata();
-        mediaMetadata.setResourceOwner(getUsernameFromContext());
+
+        String resourceOwnerId = getResourceOwnerIdFromUsername(storageSystemManager);
+        mediaMetadata.setResourceOwnerId(resourceOwnerId);
+
         mediaMetadata.setFileName(filesDetail.get(0).getContentDisposition().getFilename());
         mediaMetadata.setFileContentType(filesDetail.get(0).getContentType().toString());
 
@@ -78,7 +82,7 @@ public class MediaService {
 
         setSecurityForPrivilegedUserUploadedMedia(privilegedUserMetadata, mediaMetadata);
 
-        return addFile(filesInputStream, mediaMetadata);
+        return addFile(filesInputStream, mediaMetadata, storageSystemManager);
     }
 
     /**
@@ -91,8 +95,12 @@ public class MediaService {
      */
     public String uploadMedia(List<InputStream> filesInputStream, List<Attachment> filesDetail, Metadata metadata) {
 
+        StorageSystemManager storageSystemManager = getStorageSystemManager();
         MediaMetadata mediaMetadata = new MediaMetadata();
-        mediaMetadata.setResourceOwner(getUsernameFromContext());
+
+        String resourceOwnerId = getResourceOwnerIdFromUsername(storageSystemManager);
+        mediaMetadata.setResourceOwnerId(resourceOwnerId);
+
         mediaMetadata.setFileName(filesDetail.get(0).getContentDisposition().getFilename());
         mediaMetadata.setFileContentType(filesDetail.get(0).getContentType().toString());
 
@@ -100,14 +108,14 @@ public class MediaService {
             mediaMetadata.setFileTag(metadata.getTag());
         }
 
-        setSecurityForEndUserUploadedMedia(metadata, mediaMetadata);
+        setSecurityForEndUserUploadedMedia(metadata, mediaMetadata, resourceOwnerId);
 
-        return addFile(filesInputStream, mediaMetadata);
+        return addFile(filesInputStream, mediaMetadata, storageSystemManager);
     }
 
-    private String addFile(List<InputStream> filesInputStream, MediaMetadata mediaMetadata) {
+    private String addFile(List<InputStream> filesInputStream, MediaMetadata mediaMetadata, StorageSystemManager
+            storageSystemManager) {
 
-        StorageSystemManager storageSystemManager = getStorageSystemManager();
         String tenantDomain = getTenantDomainFromContext();
         try {
             String uuid = storageSystemManager.addFile(filesInputStream, mediaMetadata, tenantDomain);
@@ -116,7 +124,7 @@ public class MediaService {
             }
             throw handleException(Response.Status.INTERNAL_SERVER_ERROR,
                     MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UPLOADING_MEDIA);
-        } catch (StorageSystemException e) {
+        } catch (StorageSystemServerException e) {
             MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                     ERROR_CODE_ERROR_UPLOADING_MEDIA;
             Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
@@ -124,7 +132,20 @@ public class MediaService {
         }
     }
 
-    private void setSecurityForEndUserUploadedMedia(Metadata metadata, MediaMetadata mediaMetadata) {
+    private String getResourceOwnerIdFromUsername(StorageSystemManager storageSystemManager) {
+
+        try {
+            return storageSystemManager.getUserIdFromUserName(getUsernameFromContext());
+        } catch (StorageSystemServerException e) {
+            MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
+                    ERROR_CODE_ERROR_UPLOADING_MEDIA;
+            Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
+            throw handleException(e, errorMessage, LOG, status);
+        }
+    }
+
+    private void setSecurityForEndUserUploadedMedia(Metadata metadata, MediaMetadata mediaMetadata,
+                                                    String resourceOwnerId) {
 
         Security securityMeta = null;
         if (metadata != null) {
@@ -134,9 +155,9 @@ public class MediaService {
         if (securityMeta != null && securityMeta.getAllowedAll()) {
             fileSecurity = new FileSecurity(true);
         } else {
-            ArrayList<String> users = new ArrayList<>();
-            users.add(getUsernameFromContext());
-            fileSecurity = new FileSecurity(false, users);
+            ArrayList<String> userIds = new ArrayList<>();
+            userIds.add(resourceOwnerId);
+            fileSecurity = new FileSecurity(false, userIds);
         }
         mediaMetadata.setFileSecurity(fileSecurity);
     }
@@ -152,12 +173,12 @@ public class MediaService {
         if (fileSecurityMeta != null && fileSecurityMeta.getAllowedAll()) {
             fileSecurity = new FileSecurity(true);
         } else {
-            List<String> allowedUsers = null;
+            List<String> allowedUserIds = null;
             if (fileSecurityMeta != null) {
-                allowedUsers = fileSecurityMeta.getAllowedUsers();
+                allowedUserIds = fileSecurityMeta.getAllowedUserIds();
             }
-            if (CollectionUtils.isNotEmpty(allowedUsers)) {
-                fileSecurity = new FileSecurity(false, allowedUsers);
+            if (CollectionUtils.isNotEmpty(allowedUserIds)) {
+                fileSecurity = new FileSecurity(false, allowedUserIds);
             } else {
                 fileSecurity = new FileSecurity(false);
             }
@@ -195,6 +216,30 @@ public class MediaService {
             throw handleException(Response.Status.FORBIDDEN,
                     MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_UPLOADING_MEDIA_UNSUPPORTED_CONTENT_TYPE,
                     mediaType.toString());
+        }
+    }
+
+    /**
+     * Validates whether the media to be uploaded is not exceeding the configured maximum file size allowed.
+     *
+     * @param inputStream The media to be uploaded as an input stream.
+     */
+    public void validateFileSize(InputStream inputStream) {
+
+        StorageSystemManager storageSystemManager = getStorageSystemManager();
+        try {
+            storageSystemManager.validateMediaSize(inputStream);
+        } catch (StorageSystemClientException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Unable to upload the provided media.", e);
+            }
+            throw handleException(Response.Status.BAD_REQUEST,
+                    MediaServiceConstants.ErrorMessage.ERROR_CODE_INVALID_MEDIA_SIZE);
+        } catch (StorageSystemServerException e) {
+            MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
+                    ERROR_CODE_ERROR_CALCULATING_MEDIA_SIZE;
+            Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
+            throw handleException(e, errorMessage, LOG, status);
         }
     }
 
@@ -240,17 +285,14 @@ public class MediaService {
         StorageSystemManager storageSystemManager = getStorageSystemManager();
         String tenantDomain = getTenantDomainFromContext();
         try {
-            DataContent dataContent = storageSystemManager.readContent(id, tenantDomain, type);
-            if (dataContent == null) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug(String.format("Media download request can't be performed as media with id: %s of " +
-                            "type: %s in tenant domain: %s is not existing.", id, type, tenantDomain));
-                }
-                throw handleException(Response.Status.NOT_FOUND,
-                        MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DOWNLOADING_MEDIA_FILE_NOT_FOUND, id);
+            return storageSystemManager.readContent(id, tenantDomain, type);
+        } catch (StorageSystemClientException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Media download request can't be performed.", e);
             }
-            return dataContent;
-        } catch (StorageSystemException e) {
+            throw handleException(Response.Status.NOT_FOUND,
+                    MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DOWNLOADING_MEDIA_FILE_NOT_FOUND, id);
+        } catch (StorageSystemServerException e) {
             MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                     ERROR_CODE_ERROR_DOWNLOADING_MEDIA;
             Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
@@ -297,7 +339,7 @@ public class MediaService {
             }
             throw handleException(Response.Status.NOT_FOUND,
                     MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DELETING_MEDIA_FILE_NOT_FOUND, id, type);
-        } catch (StorageSystemException e) {
+        } catch (StorageSystemServerException e) {
             MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                     ERROR_CODE_ERROR_DELETING_MEDIA;
             Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
@@ -320,18 +362,15 @@ public class MediaService {
         String tenantDomain = getTenantDomainFromContext();
 
         try {
-            MediaInformation mediaInformation = storageSystemManager.retrieveMediaInformation(id, type, tenantDomain);
-            if (mediaInformation == null) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug(String.format("Media information retrieval request can't be performed as media with " +
-                            "id: %s of type: %s in tenant domain: %s is not existing.", id, type, tenantDomain));
-                }
-                throw handleException(Response.Status.NOT_FOUND,
-                        MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION_FILE_NOT_FOUND,
-                        id);
+            return storageSystemManager.retrieveMediaInformation(id, type, tenantDomain);
+        } catch (StorageSystemClientException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Unable to retrieve requested media information.", e);
             }
-            return mediaInformation;
-        } catch (StorageSystemException e) {
+            throw handleException(Response.Status.NOT_FOUND,
+                    MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION_FILE_NOT_FOUND,
+                    id);
+        } catch (StorageSystemServerException e) {
             MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                     ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION;
             Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;

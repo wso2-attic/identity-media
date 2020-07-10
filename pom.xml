@@ -337,8 +337,7 @@
         <!-- Pax Logging Version -->
         <pax.logging.api.version>1.10.1</pax.logging.api.version>
         <!-- kernel version -->
-        <carbon.kernel.version>4.5.0</carbon.kernel.version>
-        <carbon.kernel.feature.version>4.5.0</carbon.kernel.feature.version>
+        <carbon.kernel.version>4.6.0</carbon.kernel.version>
         <identity.media.core.exp.pkg.version>${project.version}</identity.media.core.exp.pkg.version>
         <carbon.identity.framework.version>5.17.66</carbon.identity.framework.version>
         <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 6.0.0)
@@ -346,7 +345,8 @@
         <org.wso2.carbon.identity.media.core.imp.pkg.version.range>[2.0.0,3.0.0)</org.wso2.carbon.identity.media.core.imp.pkg.version.range>
         <org.wso2.carbon.identity.auth.service.version>1.4.6</org.wso2.carbon.identity.auth.service.version>
         <json-simple.version>1.1.wso2v1</json-simple.version>
-        <user.core.imp.pkg.version.range>[4.5,5)</user.core.imp.pkg.version.range>
+        <user.core.imp.pkg.version.range>[4.6.0,5.0.0)</user.core.imp.pkg.version.range>
+        <carbon.user.api.imp.pkg.version.range>[1.0.1,2.0.0)</carbon.user.api.imp.pkg.version.range>
         <org.apache.commons.io.imp.pkg.version.range>[2.4,3)</org.apache.commons.io.imp.pkg.version.range>
         <org.apache.commons.codec.imp.pkg.version.range>[1.4,2)</org.apache.commons.codec.imp.pkg.version.range>
         <org.apache.commons.lang.imp.pkg.version.range>[2.6,3)</org.apache.commons.lang.imp.pkg.version.range>

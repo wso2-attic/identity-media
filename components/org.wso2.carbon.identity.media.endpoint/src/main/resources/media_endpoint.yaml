@@ -296,7 +296,7 @@ components:
       required: true
       schema:
         type: string
-      example: 6e41cb95-c3b3-4e6c-928a-acb1b88e991d
+      example: 20201012-6e41cb95-c3b3-4e6c-928a-acb1b88e991d
     typeParam:
       in: path
       name: type
@@ -368,8 +368,8 @@ components:
         - $ref: '#/components/schemas/Security'
         - type: object
           properties:
-            allowedUsers:
-              $ref: '#/components/schemas/AllowedUsers'
+            allowedUserIds:
+              $ref: '#/components/schemas/AllowedUserIds'
 
     Tag:
       type: string
@@ -381,12 +381,12 @@ components:
       description: Defines whether the file is publicly available for access or has restricted access.
       example: false
 
-    AllowedUsers:
+    AllowedUserIds:
       type: array
-      description: The set of users entitled to access the file.
+      description: The ids of set of users entitled to access the file.
       items:
         type: string
-      example: ['user1', 'user2']
+      example: ['de0f7994-eb83-4cd9-96db-52cb62a1feaf', 'fcb1940b-d669-4c58-8292-e8bca0f606b4']
 
     Identifiers:
       type: array
@@ -411,7 +411,7 @@ components:
                 description: Identifier for the sub resource.
               href:
                 type: string
-                example: '/t/carbon.super/api/identity/media/v1.0/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d?identifier=large'
+                example: '/t/carbon.super/api/identity/media/v1.0/content/image/20201012-6e41cb95-c3b3-4e6c-928a-acb1b88e991d?identifier=large'
                 description: Location of the uploaded sub resource.
 
     MediaInformationResponse:
