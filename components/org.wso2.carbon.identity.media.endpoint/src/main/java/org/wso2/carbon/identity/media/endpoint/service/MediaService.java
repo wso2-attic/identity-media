@@ -248,13 +248,14 @@ public class MediaService {
     /**
      * Download requested media file.
      *
-     * @param type       The high level content-type of the resource (if media content-type is image/png then
-     *                   type would be image).
-     * @param id         Unique identifier for the requested media.
-     * @param identifier File identifier.
+     * @param type        The high level content-type of the resource (if media content-type is image/png then
+     *                    type would be image).
+     * @param id          Unique identifier for the requested media.
+     * @param identifier  File identifier.
+     * @param ifNoneMatch The ETag value of If-None-Match request header.
      * @return requested media file.
      */
-    public Response downloadMediaFile(String type, String id, String identifier) {
+    public Response downloadMediaFile(String type, String id, String identifier, String ifNoneMatch) {
 
         // Retrieving a sub-representation of a media is not supported during the first phase of the implementation.
         if (StringUtils.isNotBlank(identifier)) {
@@ -269,12 +270,23 @@ public class MediaService {
         cacheControl.setPrivate(true);
 
         if (resource instanceof FileContent) {
-            return Response.ok(((FileContent) resource).getFile()).header(HTTPConstants.HEADER_CONTENT_TYPE,
-                    ((FileContent) resource).getResponseContentType()).cacheControl(cacheControl).build();
+            FileContent fileContent = (FileContent) resource;
+            String etag = fileContent.getETag();
+            if (StringUtils.isNotBlank(ifNoneMatch) && ifNoneMatch.startsWith("\"") && ifNoneMatch.endsWith("\"") &&
+                    StringUtils.equals(ifNoneMatch.replace("\"", ""), etag)) {
+                return Response.notModified(ifNoneMatch).build();
+            }
+            return Response.ok(fileContent.getFile()).header(HTTPConstants.HEADER_CONTENT_TYPE,
+                    fileContent.getResponseContentType()).tag(etag).cacheControl(cacheControl).build();
         } else if (resource instanceof StreamContent) {
-            return Response.ok().entity(((StreamContent) resource).getInputStream()).header(
-                    HTTPConstants.HEADER_CONTENT_TYPE, ((StreamContent) resource).getResponseContentType())
-                    .cacheControl(cacheControl).build();
+            StreamContent streamContent = (StreamContent) resource;
+            String etag = streamContent.getETag();
+            if (StringUtils.isNotBlank(ifNoneMatch) && ifNoneMatch.startsWith("\"") && ifNoneMatch.endsWith("\"") &&
+                    StringUtils.equals(ifNoneMatch.replace("\"", ""), etag)) {
+                return Response.notModified(ifNoneMatch).build();
+            }
+            return Response.ok().entity(streamContent.getInputStream()).header(HTTPConstants.HEADER_CONTENT_TYPE,
+                    streamContent.getResponseContentType()).cacheControl(cacheControl).build();
         }
         MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage
                 .ERROR_CODE_ERROR_DOWNLOADING_MEDIA;

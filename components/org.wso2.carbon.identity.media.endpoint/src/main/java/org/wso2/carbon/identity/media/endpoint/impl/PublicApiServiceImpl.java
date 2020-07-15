@@ -31,8 +31,8 @@ public class PublicApiServiceImpl implements PublicApiService {
     private MediaService mediaService;
 
     @Override
-    public Response downloadPublicMedia(String type, String id, String identifier) {
+    public Response downloadPublicMedia(String type, String id, String identifier, String ifNoneMatch) {
 
-        return mediaService.downloadMediaFile(type, id, identifier);
+        return mediaService.downloadMediaFile(type, id, identifier, ifNoneMatch);
     }
 }

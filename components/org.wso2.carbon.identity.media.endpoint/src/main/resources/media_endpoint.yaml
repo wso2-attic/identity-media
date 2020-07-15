@@ -113,6 +113,7 @@ paths:
           example: 'medium'
         - $ref: '#/components/parameters/typeParam'
         - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/If-None-Match'
       responses:
         '200':
           description: File downloaded successfully.
@@ -123,10 +124,16 @@ paths:
             Cache-Control:
               schema:
                 type: string
+            ETag:
+              description: Entity Tag of the response resource. Used by caches, or in conditional requests.
+              schema:
+                type: string
           content:
             application/octet-stream:
               schema:
                 $ref: '#/components/schemas/DownloadFile'
+        '304':
+          $ref: '#/components/responses/NotModified'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -154,6 +161,7 @@ paths:
           example: 'medium'
         - $ref: '#/components/parameters/typeParam'
         - $ref: '#/components/parameters/idParam'
+        - $ref: '#/components/parameters/If-None-Match'
       responses:
         '200':
           description: File downloaded successfully.
@@ -164,10 +172,16 @@ paths:
             Cache-Control:
               schema:
                 type: string
+            ETag:
+              description: Entity Tag of the response resource. Used by caches, or in conditional requests.
+              schema:
+                type: string
           content:
             application/octet-stream:
               schema:
                 $ref: '#/components/schemas/DownloadFile'
+        '304':
+          $ref: '#/components/responses/NotModified'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -305,6 +319,16 @@ components:
       schema:
         type: string
       example: image
+
+    # The HTTP If-None-Match header
+    # Used to avoid retrieving data that are already cached
+    If-None-Match:
+      name: If-None-Match
+      in: header
+      description: Validator for conditional requests; based on the ETag of the formerly retrieved variant of the resource.
+      schema:
+        type: string
+      example: f88dd058fe004909615a64f01be66a7
 
   schemas:
     # Multiple file uploads will not be supported in the first phase of the implementation.
@@ -465,6 +489,8 @@ components:
       description: Authentication information is missing or invalid.
     Forbidden:
       description: Access forbidden.
+    NotModified:
+      description: Not Modified. Empty body because the client has already the latest version of the requested resource.
     ServerError:
       description: Internal server error.
       content:

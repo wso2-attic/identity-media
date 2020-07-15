@@ -31,8 +31,8 @@ public class ContentApiServiceImpl implements ContentApiService {
     private MediaService mediaService;
 
     @Override
-    public Response downloadMedia(String type, String id, String identifier) {
+    public Response downloadMedia(String type, String id, String identifier, String ifNoneMatch) {
 
-        return mediaService.downloadMediaFile(type, id, identifier);
+        return mediaService.downloadMediaFile(type, id, identifier, ifNoneMatch);
     }
 }

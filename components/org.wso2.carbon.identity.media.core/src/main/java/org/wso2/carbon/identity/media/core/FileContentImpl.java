@@ -27,16 +27,18 @@ public class FileContentImpl implements FileContent {
 
     private File file;
     private String responseContentType;
+    private String etag;
 
     public FileContentImpl(File file) {
 
         this.file = file;
     }
 
-    public FileContentImpl(File file, String responseContentType) {
+    public FileContentImpl(File file, String responseContentType, String etag) {
 
         this.file = file;
         this.responseContentType = responseContentType;
+        this.etag = etag;
     }
 
     @Override
@@ -49,5 +51,11 @@ public class FileContentImpl implements FileContent {
     public String getResponseContentType() {
 
         return responseContentType;
+    }
+
+    @Override
+    public String getETag() {
+
+        return etag;
     }
 }

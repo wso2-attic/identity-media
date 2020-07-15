@@ -15,6 +15,7 @@
  */
 package org.wso2.carbon.identity.media.core.file;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -99,7 +100,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             MediaFileDownloadData mediaFileDownloadData = getMediaFile(id, tenantDomain, type);
             if (mediaFileDownloadData != null && mediaFileDownloadData.getMediaFile() != null) {
                 fileContent = new FileContentImpl(mediaFileDownloadData.getMediaFile(),
-                        mediaFileDownloadData.getResponseContentType());
+                        mediaFileDownloadData.getResponseContentType(), mediaFileDownloadData.getETag());
             }
             if (fileContent == null) {
                 throw new StorageSystemClientException(String.format("Requested media of type: %s with id: %s in" +
@@ -287,8 +288,8 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         return null;
     }
 
-    private MediaFileDownloadData getMediaFile(String uuid, String tenantDomain, String type) throws
-            IOException, ParseException {
+    private MediaFileDownloadData getMediaFile(String uuid, String tenantDomain, String type) throws IOException,
+            ParseException {
 
         int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
         MediaFileDownloadData mediaFileDownloadData = new MediaFileDownloadData();
@@ -296,8 +297,13 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         Path fileStorageLocation = getStorageDirectory(type, tenantId, uuid);
         if (fileStorageLocation != null) {
             Path filePath = fileStorageLocation.resolve(uuid).normalize();
-            if (filePath.toFile().exists()) {
-                mediaFileDownloadData.setMediaFile(filePath.toFile());
+            File media = filePath.toFile();
+            if (media.exists()) {
+                mediaFileDownloadData.setMediaFile(media);
+
+                long lastModifiedTime = media.lastModified();
+                mediaFileDownloadData.setETag(DigestUtils.sha256Hex(uuid + lastModifiedTime));
+
                 String metadataFileName = uuid + METADATA_FILE_SUFFIX + METADATA_FILE_EXTENSION;
                 Path metadataFilePath = fileStorageLocation.resolve(metadataFileName).normalize();
                 if (metadataFilePath.toFile().exists()) {

@@ -54,6 +54,7 @@ public class ContentApi  {
     }, tags={ "Download Media" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "File downloaded successfully.", response = File.class),
+        @ApiResponse(code = 304, message = "Not Modified. Empty body because the client has already the latest version of the requested resource.", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid input in the request.", response = Error.class),
         @ApiResponse(code = 404, message = "Requested resource is not found.", response = Error.class),
         @ApiResponse(code = 401, message = "Authentication information is missing or invalid.", response = Void.class),
@@ -61,9 +62,9 @@ public class ContentApi  {
         @ApiResponse(code = 500, message = "Internal server error.", response = Error.class),
         @ApiResponse(code = 501, message = "Not implemented.", response = Error.class)
     })
-    public Response downloadMedia(@ApiParam(value = "The media type.",required=true) @PathParam("type") String type, @ApiParam(value = "Unique identifier for the file.",required=true) @PathParam("id") String id,     @Valid@ApiParam(value = "")  @QueryParam("identifier") String identifier) {
+    public Response downloadMedia(@ApiParam(value = "The media type.",required=true) @PathParam("type") String type, @ApiParam(value = "Unique identifier for the file.",required=true) @PathParam("id") String id,     @Valid@ApiParam(value = "")  @QueryParam("identifier") String identifier,     @Valid @ApiParam(value = "Validator for conditional requests; based on the ETag of the formerly retrieved variant of the resource." )@HeaderParam("If-None-Match") String ifNoneMatch) {
 
-        return delegate.downloadMedia(type,  id,  identifier );
+        return delegate.downloadMedia(type,  id,  identifier,  ifNoneMatch );
     }
 
 }
