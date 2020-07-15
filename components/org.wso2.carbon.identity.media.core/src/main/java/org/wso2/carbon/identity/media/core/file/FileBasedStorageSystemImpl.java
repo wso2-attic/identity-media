@@ -92,8 +92,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public DataContent getFile(String id, String tenantDomain, String type) throws StorageSystemServerException,
-            StorageSystemClientException {
+    public DataContent getFile(String id, String tenantDomain, String type) throws StorageSystemException {
 
         FileContentImpl fileContent = null;
         try {
@@ -183,8 +182,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemServerException,
-            StorageSystemClientException {
+    public void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemException {
 
         try {
             deleteFile(id, type, tenantDomain);

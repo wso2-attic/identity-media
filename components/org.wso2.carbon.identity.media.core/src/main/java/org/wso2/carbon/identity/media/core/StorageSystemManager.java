@@ -88,11 +88,9 @@ public class StorageSystemManager {
      * @param type         The high level content-type of the resource (if media content-type is image/png then
      *                     type would be image).
      * @return requested file.
-     * @throws StorageSystemServerException The server exception related to retrieving the media.
-     * @throws StorageSystemClientException The client exception related to retrieving the media.
+     * @throws StorageSystemException Exception related to retrieving the media.
      */
-    public DataContent readContent(String id, String tenantDomain, String type) throws StorageSystemServerException,
-            StorageSystemClientException {
+    public DataContent readContent(String id, String tenantDomain, String type) throws StorageSystemException {
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.format("Download media for tenant domain %s.", tenantDomain));
@@ -178,11 +176,10 @@ public class StorageSystemManager {
      *                     type would be image).
      * @param tenantDomain The tenant domain of the service call.
      * @return MediaInformation The media information.
-     * @throws StorageSystemServerException The server exception related to retrieving media information.
-     * @throws StorageSystemClientException The client exception related to retrieving media information.
+     * @throws StorageSystemException Exception related to retrieving media information.
      */
     public MediaInformation retrieveMediaInformation(String id, String type, String tenantDomain)
-            throws StorageSystemServerException, StorageSystemClientException {
+            throws StorageSystemException {
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.format("Retrieve information for media of type: %s, unique id: %s and tenant " +
@@ -199,11 +196,9 @@ public class StorageSystemManager {
      * @param type         The high level content-type of the resource (if media content-type is image/png then
      *                     type would be image).
      * @param tenantDomain The tenant domain of the service call.
-     * @throws StorageSystemServerException The server exception related to file deletion.
-     * @throws StorageSystemClientException The client exception related to file deletion.
+     * @throws StorageSystemException Exception related to file deletion.
      */
-    public void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemServerException,
-            StorageSystemClientException {
+    public void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemException {
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.format("Delete media of type: %s in tenant domain: %s.", type, tenantDomain));
@@ -251,10 +246,10 @@ public class StorageSystemManager {
             LOGGER.debug("Started content type validation for media to be uploaded.");
         }
 
-        String environmentVariableForAllowedContentTypes = System.getenv(CONFIGURABLE_MEDIA_CONTENT_TYPES);
+        String envForAllowedContentTypes = System.getenv(CONFIGURABLE_MEDIA_CONTENT_TYPES);
         HashMap<String, List<String>> allowedContentTypes = new HashMap<>();
-        if (StringUtils.isNotBlank(environmentVariableForAllowedContentTypes)) {
-            String[] contentTypes = environmentVariableForAllowedContentTypes.split(",");
+        if (StringUtils.isNotBlank(envForAllowedContentTypes)) {
+            String[] contentTypes = envForAllowedContentTypes.split(",");
             for (String contentType : contentTypes) {
                 String environmentVariableForAllowedContentSubTypes =
                         System.getenv(String.format("MEDIA_%s_CONTENT_SUB_TYPES",
@@ -295,10 +290,10 @@ public class StorageSystemManager {
                     "supported content type.");
         }
 
-        String environmentVariableForAllowedContentTypes = System.getenv(CONFIGURABLE_MEDIA_CONTENT_TYPES);
+        String envForAllowedContentTypes = System.getenv(CONFIGURABLE_MEDIA_CONTENT_TYPES);
         Set<String> allowedContentTypes;
-        if (StringUtils.isNotBlank(environmentVariableForAllowedContentTypes)) {
-            String[] contentTypes = environmentVariableForAllowedContentTypes.split(",");
+        if (StringUtils.isNotBlank(envForAllowedContentTypes)) {
+            String[] contentTypes = envForAllowedContentTypes.split(",");
             allowedContentTypes = new HashSet<>(Arrays.asList(contentTypes));
 
         } else {
@@ -344,16 +339,14 @@ public class StorageSystemManager {
      * Validates if the file size of the media to be uploaded doesn't exceed the maximum allowed file size.
      *
      * @param inputStream The media as an input.
-     * @throws StorageSystemServerException The server exception related to validating media size.
-     * @throws StorageSystemClientException The client exception related to validating media size.
+     * @throws StorageSystemException Exception related to validating media size.
      */
-    public void validateMediaSize(InputStream inputStream) throws StorageSystemServerException,
-            StorageSystemClientException {
+    public void validateMediaSize(InputStream inputStream) throws StorageSystemException {
 
-        String environmentVariableForMediaSize = System.getenv(CONFIGURABLE_MAXIMUM_MEDIA_SIZE_IN_BYTES);
+        String envForMediaSize = System.getenv(CONFIGURABLE_MAXIMUM_MEDIA_SIZE_IN_BYTES);
         int allowedMaximumMediaSize;
-        if (StringUtils.isNotBlank(environmentVariableForMediaSize)) {
-            allowedMaximumMediaSize = Integer.parseInt(environmentVariableForMediaSize);
+        if (StringUtils.isNotBlank(envForMediaSize)) {
+            allowedMaximumMediaSize = Integer.parseInt(envForMediaSize);
         } else {
             allowedMaximumMediaSize = StorageSystemUtil.getMediaMaximumSize();
         }
@@ -378,9 +371,9 @@ public class StorageSystemManager {
 
     private String getMediaStoreType() {
 
-        String environmentVariableForMediaStoreType = System.getenv(CONFIGURABLE_MEDIA_STORE_TYPE);
-        if (StringUtils.isNotBlank(environmentVariableForMediaStoreType)) {
-            return environmentVariableForMediaStoreType;
+        String envForMediaStoreType = System.getenv(CONFIGURABLE_MEDIA_STORE_TYPE);
+        if (StringUtils.isNotBlank(envForMediaStoreType)) {
+            return envForMediaStoreType;
         } else {
             return StorageSystemUtil.getMediaStoreType();
         }

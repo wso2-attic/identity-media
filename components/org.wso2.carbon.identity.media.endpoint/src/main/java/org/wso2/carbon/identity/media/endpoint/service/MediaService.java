@@ -27,6 +27,7 @@ import org.wso2.carbon.identity.media.core.FileContent;
 import org.wso2.carbon.identity.media.core.StorageSystemManager;
 import org.wso2.carbon.identity.media.core.StreamContent;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemClientException;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemServerException;
 import org.wso2.carbon.identity.media.core.model.FileSecurity;
 import org.wso2.carbon.identity.media.core.model.MediaInformation;
@@ -229,13 +230,14 @@ public class MediaService {
         StorageSystemManager storageSystemManager = getStorageSystemManager();
         try {
             storageSystemManager.validateMediaSize(inputStream);
-        } catch (StorageSystemClientException e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Unable to upload the provided media.", e);
+        } catch (StorageSystemException e) {
+            if (e instanceof StorageSystemClientException) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Unable to upload the provided media.", e);
+                }
+                throw handleException(Response.Status.BAD_REQUEST,
+                        MediaServiceConstants.ErrorMessage.ERROR_CODE_INVALID_MEDIA_SIZE);
             }
-            throw handleException(Response.Status.BAD_REQUEST,
-                    MediaServiceConstants.ErrorMessage.ERROR_CODE_INVALID_MEDIA_SIZE);
-        } catch (StorageSystemServerException e) {
             MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                     ERROR_CODE_ERROR_CALCULATING_MEDIA_SIZE;
             Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
@@ -286,13 +288,14 @@ public class MediaService {
         String tenantDomain = getTenantDomainFromContext();
         try {
             return storageSystemManager.readContent(id, tenantDomain, type);
-        } catch (StorageSystemClientException e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Media download request can't be performed.", e);
+        } catch (StorageSystemException e) {
+            if (e instanceof StorageSystemClientException) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Media download request can't be performed.", e);
+                }
+                throw handleException(Response.Status.NOT_FOUND,
+                        MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DOWNLOADING_MEDIA_FILE_NOT_FOUND, id);
             }
-            throw handleException(Response.Status.NOT_FOUND,
-                    MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DOWNLOADING_MEDIA_FILE_NOT_FOUND, id);
-        } catch (StorageSystemServerException e) {
             MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                     ERROR_CODE_ERROR_DOWNLOADING_MEDIA;
             Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
@@ -333,13 +336,14 @@ public class MediaService {
         String tenantDomain = getTenantDomainFromContext();
         try {
             storageSystemManager.deleteMedia(id, type, tenantDomain);
-        } catch (StorageSystemClientException e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Client exception while deleting media.", e);
+        } catch (StorageSystemException e) {
+            if (e instanceof StorageSystemClientException) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Client exception while deleting media.", e);
+                }
+                throw handleException(Response.Status.NOT_FOUND,
+                        MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DELETING_MEDIA_FILE_NOT_FOUND, id, type);
             }
-            throw handleException(Response.Status.NOT_FOUND,
-                    MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_DELETING_MEDIA_FILE_NOT_FOUND, id, type);
-        } catch (StorageSystemServerException e) {
             MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                     ERROR_CODE_ERROR_DELETING_MEDIA;
             Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
@@ -363,14 +367,15 @@ public class MediaService {
 
         try {
             return storageSystemManager.retrieveMediaInformation(id, type, tenantDomain);
-        } catch (StorageSystemClientException e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Unable to retrieve requested media information.", e);
+        } catch (StorageSystemException e) {
+            if (e instanceof StorageSystemClientException) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Unable to retrieve requested media information.", e);
+                }
+                throw handleException(Response.Status.NOT_FOUND,
+                        MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION_FILE_NOT_FOUND,
+                        id);
             }
-            throw handleException(Response.Status.NOT_FOUND,
-                    MediaServiceConstants.ErrorMessage.ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION_FILE_NOT_FOUND,
-                    id);
-        } catch (StorageSystemServerException e) {
             MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                     ERROR_CODE_ERROR_RETRIEVING_MEDIA_INFORMATION;
             Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;

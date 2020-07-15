@@ -17,7 +17,6 @@ package org.wso2.carbon.identity.media.core.jdbc;
 
 import org.wso2.carbon.identity.media.core.DataContent;
 import org.wso2.carbon.identity.media.core.StorageSystem;
-import org.wso2.carbon.identity.media.core.exception.StorageSystemClientException;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemServerException;
 import org.wso2.carbon.identity.media.core.model.MediaInformation;
@@ -39,8 +38,7 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public DataContent getFile(String id, String tenantDomain, String type) throws StorageSystemServerException,
-            StorageSystemClientException {
+    public DataContent getFile(String id, String tenantDomain, String type) throws StorageSystemException {
 
         throw new UnsupportedOperationException("Database based get file operation not supported.");
     }
@@ -67,15 +65,14 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
     }
 
     @Override
-    public void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemServerException,
-            StorageSystemClientException {
+    public void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemException {
 
         throw new UnsupportedOperationException("Database based delete file operation not supported.");
     }
 
     @Override
     public MediaInformation getMediaInformation(String id, String type, String tenantDomain) throws
-            StorageSystemServerException, StorageSystemClientException {
+            StorageSystemException {
 
         throw new UnsupportedOperationException("Database based media information retrieval not supported.");
     }
