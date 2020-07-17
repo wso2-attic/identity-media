@@ -71,13 +71,13 @@ public class StorageSystemManager {
     public String addFile(List<InputStream> inputStream, MediaMetadata mediaMetadata, String tenantDomain)
             throws StorageSystemServerException {
 
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(getMediaStoreType());
+        StorageSystem storageSystem = getStorageSystem(getMediaStoreType());
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         // id for the uploaded media is calculated by concatenating current date (in yyyyMMdd format) with uuid.
         String id = LocalDate.now().format(formatter) + "-" + StorageSystemUtil.calculateUUID();
 
-        return storageSystemFactory.getInstance().addMedia(inputStream, mediaMetadata, id, tenantDomain);
+        return storageSystem.addMedia(inputStream, mediaMetadata, id, tenantDomain);
     }
 
     /**
@@ -95,8 +95,8 @@ public class StorageSystemManager {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.format("Download media for tenant domain %s.", tenantDomain));
         }
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(getMediaStoreType());
-        return storageSystemFactory.getInstance().getFile(id, tenantDomain, type);
+        StorageSystem storageSystem = getStorageSystem(getMediaStoreType());
+        return storageSystem.getFile(id, tenantDomain, type);
     }
 
     /**
@@ -116,8 +116,8 @@ public class StorageSystemManager {
             LOGGER.debug(String.format("Evaluate security for media of type: %s, unique id: %s and tenant domain %s.",
                     id, type, tenantDomain));
         }
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(getMediaStoreType());
-        return storageSystemFactory.getInstance().isDownloadAllowedForPublicMedia(id, type, tenantDomain);
+        StorageSystem storageSystem = getStorageSystem(getMediaStoreType());
+        return storageSystem.isDownloadAllowedForPublicMedia(id, type, tenantDomain);
     }
 
     /**
@@ -138,10 +138,9 @@ public class StorageSystemManager {
             LOGGER.debug(String.format("Evaluate download security for media of type: %s, unique id: %s and tenant " +
                             "domain %s.", type, mediaId, tenantDomain));
         }
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(getMediaStoreType());
+        StorageSystem storageSystem = getStorageSystem(getMediaStoreType());
         String userId = getUserIdFromUserName(username);
-        return storageSystemFactory.getInstance().isDownloadAllowedForProtectedMedia(mediaId, type, tenantDomain,
-                userId);
+        return storageSystem.isDownloadAllowedForProtectedMedia(mediaId, type, tenantDomain, userId);
     }
 
     /**
@@ -162,10 +161,9 @@ public class StorageSystemManager {
             LOGGER.debug(String.format("Evaluate media management security for media of type: %s, unique id: %s and " +
                     "tenant domain %s.", type, mediaId, tenantDomain));
         }
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(getMediaStoreType());
+        StorageSystem storageSystem = getStorageSystem(getMediaStoreType());
         String userId = getUserIdFromUserName(username);
-        return storageSystemFactory.getInstance().isMediaManagementAllowedForEndUser(mediaId, type, tenantDomain,
-                userId);
+        return storageSystem.isMediaManagementAllowedForEndUser(mediaId, type, tenantDomain, userId);
     }
 
     /**
@@ -185,8 +183,8 @@ public class StorageSystemManager {
             LOGGER.debug(String.format("Retrieve information for media of type: %s, unique id: %s and tenant " +
                     "domain %s.", id, type, tenantDomain));
         }
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(getMediaStoreType());
-        return storageSystemFactory.getInstance().getMediaInformation(id, type, tenantDomain);
+        StorageSystem storageSystem = getStorageSystem(getMediaStoreType());
+        return storageSystem.getMediaInformation(id, type, tenantDomain);
     }
 
     /**
@@ -203,8 +201,8 @@ public class StorageSystemManager {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.format("Delete media of type: %s in tenant domain: %s.", type, tenantDomain));
         }
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(getMediaStoreType());
-        storageSystemFactory.getInstance().deleteMedia(id, type, tenantDomain);
+        StorageSystem storageSystem = getStorageSystem(getMediaStoreType());
+        storageSystem.deleteMedia(id, type, tenantDomain);
     }
 
     /**
@@ -221,12 +219,12 @@ public class StorageSystemManager {
     public InputStream transform(String id, String type, String tenantDomain, InputStream inputStream)
             throws StorageSystemException {
 
-        StorageSystemFactory storageSystemFactory = getStorageSystemFactory(getMediaStoreType());
+        StorageSystem storageSystem = getStorageSystem(getMediaStoreType());
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.format("Transform media for category %s and tenant domain %s.", type, tenantDomain));
         }
-        return storageSystemFactory.getInstance().transform(id, type, tenantDomain, inputStream);
+        return storageSystem.transform(id, type, tenantDomain, inputStream);
 
     }
 
@@ -251,12 +249,10 @@ public class StorageSystemManager {
         if (StringUtils.isNotBlank(envForAllowedContentTypes)) {
             String[] contentTypes = envForAllowedContentTypes.split(",");
             for (String contentType : contentTypes) {
-                String environmentVariableForAllowedContentSubTypes =
-                        System.getenv(String.format("MEDIA_%s_CONTENT_SUB_TYPES",
+                String envForAllowedContentSubTypes = System.getenv(String.format("MEDIA_%s_CONTENT_SUB_TYPES",
                                 contentType.toUpperCase(Locale.ENGLISH)));
-                if (StringUtils.isNotBlank(environmentVariableForAllowedContentSubTypes)) {
-                    allowedContentTypes.put(contentType, Arrays.asList(environmentVariableForAllowedContentSubTypes
-                            .split(",")));
+                if (StringUtils.isNotBlank(envForAllowedContentSubTypes)) {
+                    allowedContentTypes.put(contentType, Arrays.asList(envForAllowedContentSubTypes.split(",")));
                 } else {
                     allowedContentTypes.put(contentType, null);
                 }
@@ -379,7 +375,7 @@ public class StorageSystemManager {
         }
     }
 
-    private StorageSystemFactory getStorageSystemFactory(String storageType) throws StorageSystemServerException {
+    private StorageSystem getStorageSystem(String storageType) throws StorageSystemServerException {
 
         StorageSystemFactory storageSystemFactory =
                 MediaServiceDataHolder.getInstance().getStorageSystemFactories().get(storageType);
@@ -387,7 +383,7 @@ public class StorageSystemManager {
             throw new StorageSystemServerException(String.format("Unable to obtain StorageSystemFactory for " +
                     "configured media store type: %s", storageType));
         }
-        return storageSystemFactory;
+        return storageSystemFactory.getStorageSystem();
     }
 
 }

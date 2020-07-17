@@ -373,7 +373,7 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
             JSONParser jsonParser = new JSONParser();
             Object metadata = jsonParser.parse(reader);
             String resourceOwner = (String) ((JSONObject) metadata).get(MEDIA_RESOURCE_OWNER_ID);
-            return StringUtils.isNotBlank(resourceOwner) && resourceOwner.equals(userId);
+            return StringUtils.equals(resourceOwner, userId);
         }
     }
 
@@ -520,8 +520,8 @@ public class FileBasedStorageSystemImpl implements StorageSystem {
         if (configurableRootFolder != null) {
             fileStorageLocation = configurableRootFolder.resolve(Paths.get(PRE_CREATED_MEDIA_FOLDER));
 
-            // The system expects a pre-created folder called 'media' to exist in the configured media mount base
-            // directory.
+            /* The system expects a pre-created folder called 'media' to exist in the configured media mount base
+            directory. */
             if (Files.notExists(fileStorageLocation)) {
                 throw new StorageSystemServerException(String.format("A pre-created \"media\" folder within the " +
                         "configured media mount base directory %s is expected.", configurableRootFolder));

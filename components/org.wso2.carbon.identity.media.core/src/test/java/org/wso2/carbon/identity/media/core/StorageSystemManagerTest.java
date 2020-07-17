@@ -81,8 +81,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         mockStatic(MediaServiceDataHolder.class);
         when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
         final String storeType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
-        Assert.assertEquals(Whitebox.invokeMethod(storageSystemManager, "getStorageSystemFactory", storeType),
-                fileBasedStorageSystemFactory);
+        Assert.assertNotNull(Whitebox.invokeMethod(storageSystemManager, "getStorageSystem", storeType));
 
     }
 
@@ -92,8 +91,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         mockStatic(MediaServiceDataHolder.class);
         when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
         final String storeType = "org.wso2.carbon.identity.media.jdbc.DatabaseBasedStorageSystemImpl";
-        Assert.assertEquals(Whitebox.invokeMethod(storageSystemManager, "getStorageSystemFactory", storeType),
-                databaseBasedStorageSystemFactory);
+        Assert.assertNotNull(Whitebox.invokeMethod(storageSystemManager, "getStorageSystem", storeType));
 
     }
 
@@ -103,7 +101,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         mockStatic(MediaServiceDataHolder.class);
         when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
         final String storeType = "org.wso2.carbon.identity.media.incorrect.IncorrectStorageSystemImpl";
-        Assert.assertNull(Whitebox.invokeMethod(storageSystemManager, "getStorageSystemFactory", storeType));
+        Assert.assertNull(Whitebox.invokeMethod(storageSystemManager, "getStorageSystem", storeType));
 
     }
 
@@ -114,7 +112,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
 
         FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
-        when(fileBasedStorageSystemFactory.getInstance()).thenReturn(fileBasedStorageSystem);
+        when(fileBasedStorageSystemFactory.getStorageSystem()).thenReturn(fileBasedStorageSystem);
 
         mockStatic(StorageSystemUtil.class);
         String mockUUID = "30d0325e-40bc-45f3-845e-f13dd130e963";
@@ -175,7 +173,7 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         mockStatic(MediaServiceDataHolder.class);
         when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
         FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
-        when(fileBasedStorageSystemFactory.getInstance()).thenReturn(fileBasedStorageSystem);
+        when(fileBasedStorageSystemFactory.getStorageSystem()).thenReturn(fileBasedStorageSystem);
 
         mockStatic(StorageSystemUtil.class);
         String mockstoreType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";

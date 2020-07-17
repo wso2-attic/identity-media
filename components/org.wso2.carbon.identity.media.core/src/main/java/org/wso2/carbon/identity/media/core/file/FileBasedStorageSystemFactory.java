@@ -26,7 +26,7 @@ public class FileBasedStorageSystemFactory extends StorageSystemFactory {
     private static final String FILE = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
 
     @Override
-    public StorageSystem getInstance() {
+    public StorageSystem getStorageSystem() {
 
         StorageSystem fileBasedStorageSystemImpl = new FileBasedStorageSystemImpl();
         return fileBasedStorageSystemImpl;
