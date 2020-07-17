@@ -108,23 +108,25 @@
                             org.wso2.carbon.identity.media.core.*; version="${identity.media.core.exp.pkg.version}",
                         </Export-Package>
                         <Import-Package>
-                            org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
-                            org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.media.core.file;version="${org.wso2.carbon.identity.media.core.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.media.core.jdbc;version="${org.wso2.carbon.identity.media.core.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.media.core.exception;version="${org.wso2.carbon.identity.media.core.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.media.core.model;version="${org.wso2.carbon.identity.media.core.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.media.core.util;version="${org.wso2.carbon.identity.media.core.imp.pkg.version.range}",
-                            org.wso2.carbon.user.core.service;version="${user.core.imp.pkg.version.range}",
-                            org.wso2.carbon.context;version="${user.core.imp.pkg.version.range}",
+                            org.apache.commons.collections;version="${org.apache.commons.collections.imp.pkg.version.range}",
                             org.apache.commons.io;version="${org.apache.commons.io.imp.pkg.version.range}",
-                            org.wso2.carbon.identity.core.*;version="${carbon.identity.framework.imp.pkg.version.range}",
-                            org.apache.commons.codec.digest;version="${org.apache.commons.codec.imp.pkg.version.range}",
                             org.apache.commons.lang;version="${org.apache.commons.lang.imp.pkg.version.range}",
                             org.apache.commons.logging;version="${org.apache.commons.logging.imp.pkg.version.range}",
-                            org.apache.commons.collections;version="${org.apache.commons.collections.imp.pkg.version.range}",
                             org.json.simple,
-                            org.json.simple.parser
+                            org.json.simple.parser,
+                            org.osgi.framework;version="${osgi.framework.imp.pkg.version.range}",
+                            org.osgi.service.component;version="${osgi.service.component.imp.pkg.version.range}",
+                            org.wso2.carbon.context;version="${user.core.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.core.util;version="${carbon.identity.framework.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.media.core.exception;version="${org.wso2.carbon.identity.media.core.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.media.core.file;version="${org.wso2.carbon.identity.media.core.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.media.core.jdbc;version="${org.wso2.carbon.identity.media.core.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.media.core.model;version="${org.wso2.carbon.identity.media.core.imp.pkg.version.range}",
+                            org.wso2.carbon.identity.media.core.util;version="${org.wso2.carbon.identity.media.core.imp.pkg.version.range}",
+                            org.wso2.carbon.user.api;version="${carbon.user.api.imp.pkg.version.range}",
+                            org.wso2.carbon.user.core;version="${user.core.imp.pkg.version.range}",
+                            org.wso2.carbon.user.core.common;version="${user.core.imp.pkg.version.range}",
+                            org.wso2.carbon.user.core.service;version="${user.core.imp.pkg.version.range}"
                         </Import-Package>
                     </instructions>
                 </configuration>

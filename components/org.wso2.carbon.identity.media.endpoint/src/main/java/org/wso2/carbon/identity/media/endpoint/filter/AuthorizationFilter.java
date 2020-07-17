@@ -24,9 +24,10 @@ import org.wso2.carbon.identity.application.common.model.User;
 import org.wso2.carbon.identity.auth.service.AuthenticationContext;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.media.core.StorageSystemManager;
-import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemServerException;
 import org.wso2.carbon.identity.media.endpoint.common.MediaEndpointDataHolder;
 import org.wso2.carbon.identity.media.endpoint.common.MediaServiceConstants;
+import org.wso2.carbon.identity.media.endpoint.common.Util;
 import org.wso2.carbon.user.api.AuthorizationManager;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -84,6 +85,11 @@ public class AuthorizationFilter implements ContainerRequestFilter {
                     }
                     isUserAuthorized = storageSystemManager.isDownloadAllowedForPublicMedia(uuid, type, tenantDomain);
                     if (!isUserAuthorized) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug(String.format("Authorization failed for public media download request as " +
+                                    "there is no publicly available media with id: %s in tenant domain: %s", uuid,
+                                    tenantDomain));
+                        }
                         Response response = Response.status(HttpServletResponse.SC_UNAUTHORIZED).build();
                         containerRequestContext.abortWith(response);
                     }
@@ -113,15 +119,19 @@ public class AuthorizationFilter implements ContainerRequestFilter {
 
                     if (!isUserAuthorized) {
                         isUserAuthorized = storageSystemManager.isDownloadAllowedForProtectedMedia(uuid, type,
-                                tenantDomain);
+                                tenantDomain, Util.getUsernameFromContext());
                     }
 
                     if (!isUserAuthorized) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug(String.format("Unauthorized download request for protected media by user: %s " +
+                                    "in tenant domain: %s", Util.getUsernameFromContext(), tenantDomain));
+                        }
                         Response response = Response.status(HttpServletResponse.SC_UNAUTHORIZED).build();
                         containerRequestContext.abortWith(response);
                     }
                 }
-            } catch (UserStoreException | StorageSystemException e) {
+            } catch (UserStoreException | StorageSystemServerException e) {
                 MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                         ERROR_CODE_ERROR_EVALUATING_ACCESS_SECURITY;
                 Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
@@ -150,13 +160,18 @@ public class AuthorizationFilter implements ContainerRequestFilter {
                                 httpMethod));
                     }
                     isUserAuthorized = storageSystemManager.isMediaManagementAllowedForEndUser(uuid, type,
-                            tenantDomain);
+                            tenantDomain, Util.getUsernameFromContext());
                     if (!isUserAuthorized) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug(String.format("Unauthorized media management %s request by user: %s in " +
+                                            "tenant domain: %s", httpMethod, Util.getUsernameFromContext(),
+                                    tenantDomain));
+                        }
                         Response response = Response.status(HttpServletResponse.SC_UNAUTHORIZED).build();
                         containerRequestContext.abortWith(response);
                     }
                 }
-            } catch (StorageSystemException e) {
+            } catch (StorageSystemServerException e) {
                 MediaServiceConstants.ErrorMessage errorMessage = MediaServiceConstants.ErrorMessage.
                         ERROR_CODE_ERROR_EVALUATING_MEDIA_MANAGEMENT_SECURITY;
                 Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;

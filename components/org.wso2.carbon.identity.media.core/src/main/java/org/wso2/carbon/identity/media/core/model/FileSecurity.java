@@ -26,17 +26,17 @@ import java.util.List;
 public class FileSecurity {
 
     private boolean allowedAll;
-    private List<String> allowedUsers;
+    private List<String> allowedUserIds;
 
     public FileSecurity(boolean allowedAll) {
 
         this.allowedAll = allowedAll;
     }
 
-    public FileSecurity(boolean allowedAll, List<String> allowedUsers) {
+    public FileSecurity(boolean allowedAll, List<String> allowedUserIds) {
 
         this.allowedAll = allowedAll;
-        this.allowedUsers = allowedUsers;
+        this.allowedUserIds = allowedUserIds;
     }
 
     public boolean isAllowedAll() {
@@ -49,13 +49,13 @@ public class FileSecurity {
         this.allowedAll = allowedAll;
     }
 
-    public List<String> getAllowedUsers() {
+    public List<String> getAllowedUserIds() {
 
-        return allowedUsers;
+        return allowedUserIds;
     }
 
-    public void setAllowedUsers(List<String> allowedUsers) {
+    public void setAllowedUserIds(List<String> allowedUserIds) {
 
-        this.allowedUsers = allowedUsers;
+        this.allowedUserIds = allowedUserIds;
     }
 }

@@ -22,7 +22,7 @@ package org.wso2.carbon.identity.media.core;
  */
 public abstract class StorageSystemFactory {
 
-    public abstract StorageSystem getInstance();
+    public abstract StorageSystem getStorageSystem();
 
     public abstract String getStorageType();
 }

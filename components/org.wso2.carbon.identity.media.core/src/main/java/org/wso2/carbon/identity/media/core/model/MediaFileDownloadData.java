@@ -27,6 +27,7 @@ public class MediaFileDownloadData {
 
     private File mediaFile;
     private String responseContentType;
+    private String etag;
 
     public File getMediaFile() {
 
@@ -46,5 +47,15 @@ public class MediaFileDownloadData {
     public void setResponseContentType(String responseContentType) {
 
         this.responseContentType = responseContentType;
+    }
+
+    public String getETag() {
+
+        return etag;
+    }
+
+    public void setETag(String etag) {
+
+        this.etag = etag;
     }
 }

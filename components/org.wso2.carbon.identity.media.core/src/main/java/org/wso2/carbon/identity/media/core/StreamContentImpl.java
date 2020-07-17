@@ -27,16 +27,18 @@ public class StreamContentImpl implements StreamContent {
 
     private InputStream inputStream;
     private String responseContentType;
+    private String etag;
 
     public StreamContentImpl(InputStream inputStream) {
 
         this.inputStream = inputStream;
     }
 
-    public StreamContentImpl(InputStream inputStream, String responseContentType) {
+    public StreamContentImpl(InputStream inputStream, String responseContentType, String etag) {
 
         this.inputStream = inputStream;
         this.responseContentType = responseContentType;
+        this.etag = etag;
     }
 
     @Override
@@ -49,5 +51,11 @@ public class StreamContentImpl implements StreamContent {
     public String getResponseContentType() {
 
         return responseContentType;
+    }
+
+    @Override
+    public String getETag() {
+
+        return etag;
     }
 }

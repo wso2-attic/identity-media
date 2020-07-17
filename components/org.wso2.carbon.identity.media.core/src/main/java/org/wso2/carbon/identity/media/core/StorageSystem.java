@@ -16,6 +16,7 @@
 package org.wso2.carbon.identity.media.core;
 
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemServerException;
 import org.wso2.carbon.identity.media.core.model.MediaInformation;
 import org.wso2.carbon.identity.media.core.model.MediaMetadata;
 
@@ -28,23 +29,22 @@ import java.util.List;
 public interface StorageSystem {
 
     String addMedia(List<InputStream> inputStreams, MediaMetadata mediaMetadata, String uuid, String tenantDomain)
-            throws StorageSystemException;
+            throws StorageSystemServerException;
 
     DataContent getFile(String id, String tenantDomain, String type) throws StorageSystemException;
 
     boolean isDownloadAllowedForPublicMedia(String id, String type, String tenantDomain) throws
-            StorageSystemException;
+            StorageSystemServerException;
 
-    boolean isDownloadAllowedForProtectedMedia(String id, String type, String tenantDomain) throws
-            StorageSystemException;
+    boolean isDownloadAllowedForProtectedMedia(String mediaId, String type, String tenantDomain, String userId) throws
+            StorageSystemServerException;
 
-    boolean isMediaManagementAllowedForEndUser(String id, String type, String tenantDomain) throws
-            StorageSystemException;
+    boolean isMediaManagementAllowedForEndUser(String mediaId, String type, String tenantDomain, String userId) throws
+            StorageSystemServerException;
 
     void deleteMedia(String id, String type, String tenantDomain) throws StorageSystemException;
 
-    MediaInformation getMediaInformation(String id, String type, String tenantDomain) throws
-            StorageSystemException;
+    MediaInformation getMediaInformation(String id, String type, String tenantDomain) throws StorageSystemException;
 
     InputStream transform(String id, String type, String tenantDomain, InputStream inputStream)
             throws StorageSystemException;

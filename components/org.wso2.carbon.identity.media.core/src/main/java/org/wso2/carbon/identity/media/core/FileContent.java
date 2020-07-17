@@ -34,4 +34,6 @@ public interface FileContent extends DataContent {
     File getFile();
 
     String getResponseContentType();
+
+    String getETag();
 }

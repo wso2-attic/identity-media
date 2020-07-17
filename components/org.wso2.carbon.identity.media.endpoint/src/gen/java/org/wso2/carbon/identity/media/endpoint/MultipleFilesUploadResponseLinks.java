@@ -61,7 +61,7 @@ public class MultipleFilesUploadResponseLinks  {
         return this;
     }
     
-    @ApiModelProperty(example = "/t/carbon.super/api/identity/media/v1.0/content/image/6e41cb95-c3b3-4e6c-928a-acb1b88e991d?identifier=large", value = "Location of the uploaded sub resource.")
+    @ApiModelProperty(example = "/t/carbon.super/api/identity/media/v1.0/content/image/20201012-6e41cb95-c3b3-4e6c-928a-acb1b88e991d?identifier=large", value = "Location of the uploaded sub resource.")
     @JsonProperty("href")
     @Valid
     public String getHref() {

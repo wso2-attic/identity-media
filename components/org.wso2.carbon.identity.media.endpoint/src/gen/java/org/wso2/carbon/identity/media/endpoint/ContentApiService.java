@@ -29,5 +29,5 @@ import javax.ws.rs.core.Response;
 
 public interface ContentApiService {
 
-      public Response downloadMedia(String type, String id, String identifier);
+      public Response downloadMedia(String type, String id, String identifier, String ifNoneMatch);
 }

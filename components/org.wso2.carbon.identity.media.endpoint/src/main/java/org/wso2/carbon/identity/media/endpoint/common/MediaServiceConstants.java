@@ -54,6 +54,8 @@ public class MediaServiceConstants {
                 "File with id: %s not found for media type: %s"),
         ERROR_CODE_ERROR_UNSUPPORTED_CONTENT_TYPE_PATH_PARAM("60007", "Unable to perform the requested media" +
                 " operation.", "Unsupported file content type available as a path parameter in the request."),
+        ERROR_CODE_INVALID_MEDIA_SIZE("60008", "Unable to upload the provided media.",
+                "Media size exceeds the maximum allowed size."),
 
         // Server errors.
         ERROR_CODE_ERROR_UPLOADING_MEDIA("65001", "Unable to upload the provided media.",
@@ -72,7 +74,9 @@ public class MediaServiceConstants {
         ERROR_CODE_ERROR_BUILDING_RESPONSE_HEADER_URL("65007", "Unable to build uploaded media location URL.",
                 "Server encountered an error while building URL for response header."),
         ERROR_CODE_ERROR_RETRIEVING_STORAGE_SYSTEM_MANAGER("65008", "Unable to fulfill the request.",
-                "Server encountered an error while retrieving StorageSystemManager.");
+                "Server encountered an error while retrieving StorageSystemManager."),
+        ERROR_CODE_ERROR_CALCULATING_MEDIA_SIZE("65009", "Unable to upload the provided media.",
+                "Server encountered an error while calculating media size.");
 
         private final String code;
         private final String message;

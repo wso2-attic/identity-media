@@ -15,9 +15,6 @@
  */
 package org.wso2.carbon.identity.media.core.util;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
 
 import java.io.IOException;
@@ -30,7 +27,8 @@ import java.util.UUID;
 
 import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.ALLOWED_CONTENT_SUB_TYPES;
 import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.ALLOWED_CONTENT_TYPES;
-import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.DEFAULT_MEDIA_STORE_TYPE_VALUE;
+import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.ALLOWED_MAXIMUM_SIZE_IN_BYTES;
+import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.MEDIA_MOUNT_LOCATION;
 import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.MEDIA_PROPERTIES_FILE;
 import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.MEDIA_STORE_TYPE;
 
@@ -39,9 +37,9 @@ import static org.wso2.carbon.identity.media.core.util.StorageSystemConstants.ME
  */
 public class StorageSystemUtil {
 
-    private static final Log LOGGER = LogFactory.getLog(StorageSystemUtil.class);
-
     private static String mediaStorageType;
+    private static String mediaMountLocation;
+    private static int mediaMaximumSize;
     private static HashMap<String, List<String>> contentTypes = new HashMap<>();
 
     public static String calculateUUID() {
@@ -54,10 +52,21 @@ public class StorageSystemUtil {
         return mediaStorageType;
     }
 
+    public static String getMediaMountLocation() {
+
+        return mediaMountLocation;
+    }
+
+    public static int getMediaMaximumSize() {
+
+        return mediaMaximumSize;
+    }
+
     public static HashMap<String, List<String>> getContentTypes() {
 
         return contentTypes;
     }
+
     /**
      * Read media properties defined in media.properties file.
      *
@@ -78,20 +87,16 @@ public class StorageSystemUtil {
                 throw new StorageSystemException("Error while loading media.properties file.", e);
             }
 
-            String mediaStoreTypeConfig = properties.getProperty(MEDIA_STORE_TYPE);
-            if (StringUtils.isNotBlank(mediaStoreTypeConfig)) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(String.format("The configured media store type is %s.", mediaStoreTypeConfig));
-                }
-                mediaStorageType = mediaStoreTypeConfig;
-            } else {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("MediaStoreType is not configured in media.properties file. Hence proceeding" +
-                            " with the default value: " + DEFAULT_MEDIA_STORE_TYPE_VALUE);
-                }
-                mediaStorageType = DEFAULT_MEDIA_STORE_TYPE_VALUE;
-            }
+            // Load media store type.
+            mediaStorageType = properties.getProperty(MEDIA_STORE_TYPE);
 
+            // Load media storage location (relative to CARBON_HOME).
+            mediaMountLocation = properties.getProperty(MEDIA_MOUNT_LOCATION);
+
+            // Load allowed maximum size in bytes for the media that can be uploaded.
+            mediaMaximumSize = Integer.parseInt(properties.getProperty(ALLOWED_MAXIMUM_SIZE_IN_BYTES));
+
+            // Load allowed content types.
             String[] allowedContentTypes = properties.getProperty(ALLOWED_CONTENT_TYPES).split(",");
             for (String contentType : allowedContentTypes) {
                 contentTypes.put(contentType, Arrays.asList(properties.getProperty(contentType +

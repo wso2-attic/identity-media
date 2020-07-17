@@ -35,4 +35,6 @@ public interface StreamContent extends DataContent {
     InputStream getInputStream();
 
     String getResponseContentType();
+
+    String getETag();
 }

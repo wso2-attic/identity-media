@@ -26,7 +26,7 @@ public class DatabaseBasedStorageSystemFactory extends StorageSystemFactory {
     private static final String JDBC = "org.wso2.carbon.identity.media.jdbc.DatabaseBasedStorageSystemImpl";
 
     @Override
-    public StorageSystem getInstance() {
+    public StorageSystem getStorageSystem() {
 
         StorageSystem dbBasedStorageSystem = new DatabaseBasedStorageSystemImpl();
         return dbBasedStorageSystem;

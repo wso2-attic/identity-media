@@ -29,5 +29,5 @@ import javax.ws.rs.core.Response;
 
 public interface PublicApiService {
 
-      public Response downloadPublicMedia(String type, String id, String identifier);
+      public Response downloadPublicMedia(String type, String id, String identifier, String ifNoneMatch);
 }

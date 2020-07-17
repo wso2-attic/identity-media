@@ -18,6 +18,7 @@ package org.wso2.carbon.identity.media.core.jdbc;
 import org.wso2.carbon.identity.media.core.DataContent;
 import org.wso2.carbon.identity.media.core.StorageSystem;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemServerException;
 import org.wso2.carbon.identity.media.core.model.MediaInformation;
 import org.wso2.carbon.identity.media.core.model.MediaMetadata;
 
@@ -31,7 +32,7 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
 
     @Override
     public String addMedia(List<InputStream> inputStreams, MediaMetadata mediaMetadata, String uuid,
-                           String tenantDomain) throws StorageSystemException {
+                           String tenantDomain) throws StorageSystemServerException {
 
         throw new UnsupportedOperationException("Database based add file operation not supported.");
     }
@@ -44,21 +45,21 @@ public class DatabaseBasedStorageSystemImpl implements StorageSystem {
 
     @Override
     public boolean isDownloadAllowedForPublicMedia(String id, String type, String tenantDomain) throws
-            StorageSystemException {
+            StorageSystemServerException {
 
         throw new UnsupportedOperationException("Database based security evaluation not supported.");
     }
 
     @Override
-    public boolean isDownloadAllowedForProtectedMedia(String id, String type, String tenantDomain) throws
-            StorageSystemException {
+    public boolean isDownloadAllowedForProtectedMedia(String mediaId, String type, String tenantDomain, String userId)
+            throws StorageSystemServerException {
 
         throw new UnsupportedOperationException("Database based security evaluation not supported.");
     }
 
     @Override
-    public boolean isMediaManagementAllowedForEndUser(String id, String type, String tenantDomain) throws
-            StorageSystemException {
+    public boolean isMediaManagementAllowedForEndUser(String mediaId, String type, String tenantDomain, String userId)
+            throws StorageSystemServerException {
 
         throw new UnsupportedOperationException("Database based security evaluation not supported.");
     }
