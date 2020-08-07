@@ -21,8 +21,11 @@ import org.powermock.reflect.Whitebox;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
+import org.wso2.carbon.base.CarbonBaseConstants;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.media.core.exception.StorageSystemClientException;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemException;
 import org.wso2.carbon.identity.media.core.exception.StorageSystemServerException;
 import org.wso2.carbon.identity.media.core.file.FileBasedStorageSystemFactory;
@@ -30,14 +33,17 @@ import org.wso2.carbon.identity.media.core.file.FileBasedStorageSystemImpl;
 import org.wso2.carbon.identity.media.core.internal.MediaServiceDataHolder;
 import org.wso2.carbon.identity.media.core.jdbc.DatabaseBasedStorageSystemFactory;
 import org.wso2.carbon.identity.media.core.model.FileSecurity;
+import org.wso2.carbon.identity.media.core.model.MediaInformation;
 import org.wso2.carbon.identity.media.core.model.MediaMetadata;
 import org.wso2.carbon.identity.media.core.util.StorageSystemUtil;
+import org.wso2.carbon.user.core.service.RealmService;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.mockito.Matchers.any;
@@ -50,7 +56,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @PrepareForTest({
                         IdentityUtil.class, MediaServiceDataHolder.class, FileBasedStorageSystemImpl.class,
-                        StorageSystemUtil.class, IdentityTenantUtil.class
+                        StorageSystemUtil.class, IdentityTenantUtil.class, PrivilegedCarbonContext.class
                 })
 public class StorageSystemManagerTest extends PowerMockTestCase {
 
@@ -62,16 +68,16 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
     @BeforeTest
     public void setUp() {
 
+        mockRealmService();
+
         storageSystemManager = new StorageSystemManager();
         fileBasedStorageSystemFactory = spy(new FileBasedStorageSystemFactory());
         databaseBasedStorageSystemFactory = spy(new DatabaseBasedStorageSystemFactory());
         mediaServiceDataHolder = MediaServiceDataHolder.getInstance();
 
-        mediaServiceDataHolder.getStorageSystemFactories()
-                .put("org.wso2.carbon.identity.media.file" + ".FileBasedStorageSystemImpl",
+        mediaServiceDataHolder.getStorageSystemFactories().put(TestConstants.FILE_BASED_MEDIA_STORE,
                         fileBasedStorageSystemFactory);
-        mediaServiceDataHolder.getStorageSystemFactories()
-                .put("org.wso2.carbon.identity.media.jdbc" + ".DatabaseBasedStorageSystemImpl",
+        mediaServiceDataHolder.getStorageSystemFactories().put(TestConstants.DATABASE_BASED_MEDIA_STORE,
                         databaseBasedStorageSystemFactory);
     }
 
@@ -80,9 +86,8 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
 
         mockStatic(MediaServiceDataHolder.class);
         when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
-        final String storeType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
-        Assert.assertNotNull(Whitebox.invokeMethod(storageSystemManager, "getStorageSystem", storeType));
-
+        Assert.assertNotNull(Whitebox.invokeMethod(storageSystemManager, "getStorageSystem",
+                TestConstants.FILE_BASED_MEDIA_STORE));
     }
 
     @Test
@@ -90,9 +95,8 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
 
         mockStatic(MediaServiceDataHolder.class);
         when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
-        final String storeType = "org.wso2.carbon.identity.media.jdbc.DatabaseBasedStorageSystemImpl";
-        Assert.assertNotNull(Whitebox.invokeMethod(storageSystemManager, "getStorageSystem", storeType));
-
+        Assert.assertNotNull(Whitebox.invokeMethod(storageSystemManager, "getStorageSystem",
+                TestConstants.DATABASE_BASED_MEDIA_STORE));
     }
 
     @Test(expectedExceptions = StorageSystemServerException.class)
@@ -100,75 +104,68 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
 
         mockStatic(MediaServiceDataHolder.class);
         when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
-        final String storeType = "org.wso2.carbon.identity.media.incorrect.IncorrectStorageSystemImpl";
-        Assert.assertNull(Whitebox.invokeMethod(storageSystemManager, "getStorageSystem", storeType));
-
+        Whitebox.invokeMethod(storageSystemManager, "getStorageSystem", TestConstants.INCORRECT_MEDIA_STORE);
     }
 
     @Test
-    public void testAddImageUsingFileBasedStorage() throws Exception {
-
-        mockStatic(MediaServiceDataHolder.class);
-        when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
+    public void testAddMediaUsingFileBasedStorage() throws Exception {
 
         FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
         when(fileBasedStorageSystemFactory.getStorageSystem()).thenReturn(fileBasedStorageSystem);
 
         mockStatic(StorageSystemUtil.class);
-        String mockUUID = "30d0325e-40bc-45f3-845e-f13dd130e963";
-        when(StorageSystemUtil.calculateUUID()).thenReturn(mockUUID);
-        String mockstoreType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
-        when(StorageSystemUtil.getMediaStoreType()).thenReturn(mockstoreType);
+        when(StorageSystemUtil.calculateUUID()).thenReturn(TestConstants.MEDIA_UUID);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.FILE_BASED_MEDIA_STORE);
 
         ClassLoader classLoader = getClass().getClassLoader();
-        File mediaFile = new File(classLoader.getResource("profilepic.png").getFile());
+        File mediaFile = new File(classLoader.getResource(TestConstants.FILE_NAME).getFile());
         InputStream fileInputStream = new FileInputStream(mediaFile);
         List<InputStream> inputStreams = new ArrayList<>();
         inputStreams.add(fileInputStream);
 
         MediaMetadata mediaMetadata = new MediaMetadata();
-        mediaMetadata.setFileContentType("image/png");
-        mediaMetadata.setFileName("profilepic.png");
+        mediaMetadata.setFileContentType(TestConstants.FILE_CONTENT_TYPE);
+        mediaMetadata.setFileName(TestConstants.FILE_NAME);
         mediaMetadata.setFileTag("user");
         boolean allowedAll = false;
         ArrayList<String> allowedUserIds = new ArrayList<>();
-        allowedUserIds.add("de0f7994-eb83-4cd9-96db-52cb62a1feaf");
+        allowedUserIds.add(TestConstants.USER_ID);
         FileSecurity fileSecurity = new FileSecurity(allowedAll, allowedUserIds);
         mediaMetadata.setFileSecurity(fileSecurity);
 
-        mockStatic(IdentityTenantUtil.class);
-        String tenantDomain = "carbon.super";
-        when(IdentityTenantUtil.getTenantId(tenantDomain)).thenReturn(-1234);
-        URL tevaUrl = getClass().getClassLoader().getResource("sampleimage");
-        String tevaTestFolder = new File(tevaUrl.toURI()).getAbsolutePath();
-        System.setProperty("upload.location", tevaTestFolder);
-
         when(fileBasedStorageSystem.addMedia(anyList(), any(MediaMetadata.class), anyString(), anyString()))
-                .thenReturn(mockUUID);
-        String url = storageSystemManager.addFile(inputStreams, mediaMetadata, tenantDomain);
-        Assert.assertEquals(url, mockUUID);
-
+                .thenReturn(TestConstants.MEDIA_UUID);
+        String uuid = storageSystemManager.addFile(inputStreams, mediaMetadata, TestConstants.TENANT_DOMAIN);
+        Assert.assertEquals(uuid, TestConstants.MEDIA_UUID);
     }
 
     @Test(expectedExceptions = StorageSystemServerException.class)
-    public void testAddImageWithIncorrectStorageSystemFactory() throws Exception {
+    public void testAddMediaWithNoStorageSystemFactory() throws Exception {
 
-        final String storeType = "org.wso2.carbon.identity.image.custom.CustomStorageSystemImpl";
-        mockStatic(IdentityUtil.class);
-        when(IdentityUtil.getProperty("ContentStore.Type")).thenReturn(storeType);
         mockStatic(MediaServiceDataHolder.class);
         when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
         InputStream inputStream = mock(InputStream.class);
         List<InputStream> inputStreams = new ArrayList<>();
         inputStreams.add(inputStream);
         MediaMetadata mediaMetadata = mock(MediaMetadata.class);
-        String tenantDomain = "carbon.super";
-        Assert.assertEquals(storageSystemManager.addFile(inputStreams, mediaMetadata, tenantDomain), "");
+        storageSystemManager.addFile(inputStreams, mediaMetadata, TestConstants.TENANT_DOMAIN);
+    }
 
+    @Test(expectedExceptions = StorageSystemServerException.class)
+    public void testAddMediaWithInvalidStorageSystemFactory() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.INCORRECT_MEDIA_STORE);
+
+        InputStream inputStream = mock(InputStream.class);
+        List<InputStream> inputStreams = new ArrayList<>();
+        inputStreams.add(inputStream);
+        MediaMetadata mediaMetadata = mock(MediaMetadata.class);
+        storageSystemManager.addFile(inputStreams, mediaMetadata, TestConstants.TENANT_DOMAIN);
     }
 
     @Test
-    public void testGetImageUsingFileBasedStorage() throws StorageSystemException {
+    public void testGetMediaUsingFileBasedStorage() throws StorageSystemException {
 
         mockStatic(MediaServiceDataHolder.class);
         when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
@@ -176,17 +173,281 @@ public class StorageSystemManagerTest extends PowerMockTestCase {
         when(fileBasedStorageSystemFactory.getStorageSystem()).thenReturn(fileBasedStorageSystem);
 
         mockStatic(StorageSystemUtil.class);
-        String mockstoreType = "org.wso2.carbon.identity.media.file.FileBasedStorageSystemImpl";
-        when(StorageSystemUtil.getMediaStoreType()).thenReturn(mockstoreType);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.FILE_BASED_MEDIA_STORE);
 
         File file = new File("Dummy path");
         FileContentImpl fileContent = new FileContentImpl(file);
 
         when(fileBasedStorageSystem.getFile(anyString(), anyString(), anyString())).thenReturn(fileContent);
-        String id = "imageuuid";
-        String type = "idp";
-        String tenantDomain = "carbon.super";
-        Assert.assertEquals(storageSystemManager.readContent(id, type, tenantDomain), fileContent);
+
+        Assert.assertEquals(storageSystemManager.readContent(TestConstants.MEDIA_UUID, TestConstants.MEDIA_TYPE,
+                TestConstants.TENANT_DOMAIN), fileContent);
     }
 
+    @Test(expectedExceptions = StorageSystemServerException.class)
+    public void testGetMediaWithIncorrectStorageSystemFactory() throws Exception {
+
+        mockStatic(MediaServiceDataHolder.class);
+        when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
+
+        storageSystemManager.readContent(TestConstants.MEDIA_UUID, TestConstants.MEDIA_TYPE,
+                TestConstants.TENANT_DOMAIN);
+    }
+
+    @Test
+    public void testRetrieveMediaInformationUsingFileBasedStorage() throws Exception {
+
+        mockStatic(MediaServiceDataHolder.class);
+        when(MediaServiceDataHolder.getInstance()).thenReturn(mediaServiceDataHolder);
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.FILE_BASED_MEDIA_STORE);
+
+        MediaInformation mediaInformation = new MediaInformation();
+
+        FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
+        when(fileBasedStorageSystemFactory.getStorageSystem()).thenReturn(fileBasedStorageSystem);
+        when(fileBasedStorageSystem.getMediaInformation(anyString(), anyString(), anyString()))
+                .thenReturn(mediaInformation);
+
+        Assert.assertEquals(storageSystemManager.retrieveMediaInformation(TestConstants.MEDIA_UUID,
+                TestConstants.MEDIA_TYPE, TestConstants.TENANT_DOMAIN), mediaInformation);
+    }
+
+    @Test(expectedExceptions = StorageSystemServerException.class)
+    public void testRetrieveMediaInformationWithIncorrectStorageSystemFactory() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.INCORRECT_MEDIA_STORE);
+
+        storageSystemManager.retrieveMediaInformation(TestConstants.MEDIA_UUID, TestConstants.MEDIA_TYPE,
+                TestConstants.TENANT_DOMAIN);
+    }
+
+    @Test
+    public void testIsDownloadAllowedForPublicMediaUsingFileBasedStorage() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.FILE_BASED_MEDIA_STORE);
+
+        FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
+        when(fileBasedStorageSystemFactory.getStorageSystem()).thenReturn(fileBasedStorageSystem);
+        when(fileBasedStorageSystem.isDownloadAllowedForPublicMedia(anyString(), anyString(), anyString()))
+                .thenReturn(true);
+
+        Assert.assertTrue(storageSystemManager.isDownloadAllowedForPublicMedia(TestConstants.MEDIA_UUID,
+                TestConstants.MEDIA_TYPE, TestConstants.TENANT_DOMAIN));
+    }
+
+    @Test(expectedExceptions = StorageSystemServerException.class)
+    public void testIsDownloadAllowedForPublicMediaWithIncorrectStorageSystemFactory() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.INCORRECT_MEDIA_STORE);
+
+        storageSystemManager.isDownloadAllowedForPublicMedia(TestConstants.MEDIA_UUID, TestConstants.MEDIA_TYPE,
+                TestConstants.TENANT_DOMAIN);
+    }
+
+    @Test
+    public void testIsDownloadAllowedForProtectedMediaUsingFileBasedStorage() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.FILE_BASED_MEDIA_STORE);
+
+        FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
+        when(fileBasedStorageSystemFactory.getStorageSystem()).thenReturn(fileBasedStorageSystem);
+        when(fileBasedStorageSystem.isDownloadAllowedForProtectedMedia(anyString(), anyString(), anyString(),
+                anyString())).thenReturn(true);
+
+        try {
+            startTenantFlow();
+            Assert.assertTrue(storageSystemManager.isDownloadAllowedForProtectedMedia(TestConstants.MEDIA_UUID,
+                    TestConstants.MEDIA_TYPE, TestConstants.TENANT_DOMAIN, TestConstants.USER_ID));
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
+    @Test(expectedExceptions = StorageSystemServerException.class)
+    public void testIsDownloadAllowedForProtectedMediaWithIncorrectStorageSystemFactory() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.INCORRECT_MEDIA_STORE);
+
+        Assert.assertFalse(storageSystemManager.isDownloadAllowedForProtectedMedia(TestConstants.MEDIA_UUID,
+                TestConstants.MEDIA_TYPE, TestConstants.TENANT_DOMAIN, TestConstants.USER_ID));
+    }
+
+    @Test
+    public void testIsMediaManagementAllowedForEndUserUsingFileBasedStorage() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.FILE_BASED_MEDIA_STORE);
+
+        FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
+        when(fileBasedStorageSystemFactory.getStorageSystem()).thenReturn(fileBasedStorageSystem);
+        when(fileBasedStorageSystem.isMediaManagementAllowedForEndUser(anyString(), anyString(), anyString(),
+                anyString())).thenReturn(true);
+
+        try {
+            startTenantFlow();
+            Assert.assertTrue(storageSystemManager.isMediaManagementAllowedForEndUser(TestConstants.MEDIA_UUID,
+                    TestConstants.MEDIA_TYPE, TestConstants.TENANT_DOMAIN, TestConstants.USER_ID));
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
+        }
+    }
+
+    @Test(expectedExceptions = StorageSystemServerException.class)
+    public void testIsMediaManagementAllowedForEndUserWithIncorrectStorageSystemFactory() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.INCORRECT_MEDIA_STORE);
+
+        storageSystemManager.isMediaManagementAllowedForEndUser(TestConstants.MEDIA_UUID, TestConstants.MEDIA_TYPE,
+                TestConstants.TENANT_DOMAIN, TestConstants.USER_ID);
+    }
+
+    @Test
+    public void testValidateMediaTypePathParam() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        HashMap<String, List<String>> contentTypes = new HashMap<>();
+        contentTypes.put(TestConstants.MEDIA_TYPE, null);
+        when(StorageSystemUtil.getContentTypes()).thenReturn(contentTypes);
+
+        storageSystemManager.validateMediaTypePathParam(TestConstants.MEDIA_TYPE);
+    }
+
+    @Test(expectedExceptions = StorageSystemClientException.class)
+    public void testValidateMediaTypePathParamWhenContentTypesConfiguredIsEmpty() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        HashMap<String, List<String>> contentTypes = new HashMap<>();
+        when(StorageSystemUtil.getContentTypes()).thenReturn(contentTypes);
+
+        storageSystemManager.validateMediaTypePathParam(TestConstants.MEDIA_TYPE);
+    }
+
+    @Test(expectedExceptions = StorageSystemClientException.class)
+    public void testValidateMediaTypePathParamNotAvailableInConfiguredContentTypes() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        HashMap<String, List<String>> contentTypes = new HashMap<>();
+        contentTypes.put(TestConstants.MEDIA_TYPE, null);
+        when(StorageSystemUtil.getContentTypes()).thenReturn(contentTypes);
+
+        storageSystemManager.validateMediaTypePathParam(TestConstants.INVALID_MEDIA_TYPE_PATH_PARAM);
+    }
+
+    @Test
+    public void testValidateFileUploadMediaTypes() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        HashMap<String, List<String>> contentTypes = new HashMap<>();
+        List<String> contentSubTypes = new ArrayList<>();
+        contentSubTypes.add(TestConstants.CONTENT_SUB_TYPE);
+        contentTypes.put(TestConstants.MEDIA_TYPE, contentSubTypes);
+        when(StorageSystemUtil.getContentTypes()).thenReturn(contentTypes);
+
+        storageSystemManager.validateFileUploadMediaTypes(TestConstants.MEDIA_TYPE, TestConstants.CONTENT_SUB_TYPE);
+    }
+
+    @Test(expectedExceptions = StorageSystemClientException.class)
+    public void testValidateFileUploadMediaTypesForUnallowedContentType() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        HashMap<String, List<String>> contentTypes = new HashMap<>();
+        List<String> contentSubTypes = new ArrayList<>();
+        contentSubTypes.add(TestConstants.CONTENT_SUB_TYPE);
+        contentTypes.put(TestConstants.MEDIA_TYPE, contentSubTypes);
+        when(StorageSystemUtil.getContentTypes()).thenReturn(contentTypes);
+
+        storageSystemManager.validateFileUploadMediaTypes(TestConstants.INVALID_MEDIA_TYPE,
+                TestConstants.CONTENT_SUB_TYPE);
+    }
+
+    @Test(expectedExceptions = StorageSystemClientException.class)
+    public void testValidateFileUploadMediaTypesForNoConfiguredContentTypes() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getContentTypes()).thenReturn(null);
+
+        storageSystemManager.validateFileUploadMediaTypes(TestConstants.MEDIA_TYPE, TestConstants.CONTENT_SUB_TYPE);
+    }
+
+    @Test(expectedExceptions = StorageSystemClientException.class)
+    public void testValidateFileUploadMediaTypesForUnallowedContentSubType() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        HashMap<String, List<String>> contentTypes = new HashMap<>();
+        List<String> contentSubTypes = new ArrayList<>();
+        contentSubTypes.add(TestConstants.CONTENT_SUB_TYPE);
+        contentTypes.put(TestConstants.MEDIA_TYPE, contentSubTypes);
+        when(StorageSystemUtil.getContentTypes()).thenReturn(contentTypes);
+
+        storageSystemManager.validateFileUploadMediaTypes(TestConstants.MEDIA_TYPE,
+                TestConstants.INVALID_CONTENT_SUB_TYPE);
+    }
+
+    @Test(expectedExceptions = StorageSystemClientException.class)
+    public void testValidateFileUploadMediaTypesForNoConfiguredContentSubTypes() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        HashMap<String, List<String>> contentTypes = new HashMap<>();
+        contentTypes.put(TestConstants.MEDIA_TYPE, null);
+        when(StorageSystemUtil.getContentTypes()).thenReturn(contentTypes);
+
+        storageSystemManager.validateFileUploadMediaTypes(TestConstants.MEDIA_TYPE, TestConstants.CONTENT_SUB_TYPE);
+    }
+
+    @Test(expectedExceptions = StorageSystemClientException.class)
+    public void testValidateInvalidMediaSize() throws Exception {
+
+        ClassLoader classLoader = getClass().getClassLoader();
+        File mediaFile = new File(classLoader.getResource(TestConstants.FILE_NAME).getFile());
+        InputStream fileInputStream = new FileInputStream(mediaFile);
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaMaximumSize()).thenReturn(100);
+
+        storageSystemManager.validateMediaSize(fileInputStream);
+    }
+
+    @Test
+    public void testIsMediaDeletedUsingFileBasedStorage() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.FILE_BASED_MEDIA_STORE);
+
+        FileBasedStorageSystemImpl fileBasedStorageSystem = mock(FileBasedStorageSystemImpl.class);
+        when(fileBasedStorageSystemFactory.getStorageSystem()).thenReturn(fileBasedStorageSystem);
+
+        storageSystemManager.deleteMedia(TestConstants.MEDIA_UUID, TestConstants.MEDIA_TYPE,
+                TestConstants.TENANT_DOMAIN);
+    }
+
+    @Test(expectedExceptions = StorageSystemServerException.class)
+    public void testIsMediaDeletedUsingIncorrectMediaStorage() throws Exception {
+
+        mockStatic(StorageSystemUtil.class);
+        when(StorageSystemUtil.getMediaStoreType()).thenReturn(TestConstants.INCORRECT_MEDIA_STORE);
+
+        storageSystemManager.deleteMedia(TestConstants.MEDIA_UUID, TestConstants.MEDIA_TYPE, TestConstants
+                .TENANT_DOMAIN);
+    }
+
+    private static void mockRealmService() {
+
+        RealmService mockRealmService = mock(RealmService.class);
+        MediaServiceDataHolder.getInstance().setRealmService(mockRealmService);
+    }
+
+    private static void startTenantFlow() {
+
+        String carbonHome = Paths.get(System.getProperty("user.dir"), "src", "test", "resources").toString();
+        System.setProperty(CarbonBaseConstants.CARBON_HOME, carbonHome);
+        PrivilegedCarbonContext.startTenantFlow();
+        PrivilegedCarbonContext.getThreadLocalCarbonContext().setTenantId(TestConstants.TENANT_ID);
+    }
 }
