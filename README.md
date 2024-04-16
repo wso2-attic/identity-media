@@ -1,3 +1,6 @@
+# This repository is no longer maintained.
+Issue reports and pull requests will not be attended.
+
 # identity-media
 
 This is the media service for WSO2 Identity Server.
